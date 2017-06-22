@@ -93,9 +93,9 @@ namespace CommitLog
     const int32_t rel_offset = relativeOffset(offset, base_offset_);
     const int32_t rel_position = position;
     boost::lock_guard<boost::shared_mutex> lock(mutex_);
-    *(addr_ + position_) = rel_offset;
+    *(addr_ + static_cast<int32_t>(position_)) = rel_offset;
     ++position_;
-    *(addr_ + position_) = rel_position;
+    *(addr_ + static_cast<int32_t>(position_)) = rel_position;
     ++position_;
 
     return Utils::err(mykafka::Error::OK);
