@@ -2,7 +2,7 @@ CXX = g++
 CXXFLAGS += -I/usr/local/include -I./protos/ -I./src/ -pthread -W -Wall -std=c++11
 LDFLAGS += -L/usr/local/lib `pkg-config --libs grpc++ grpc`       \
            -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed \
-           -lprotobuf -lpthread -ldl
+           -lprotobuf -lpthread -ldl -lboost_system -lboost_thread
 PROTOC = protoc
 GRPC_CPP_PLUGIN = grpc_cpp_plugin
 GRPC_CPP_PLUGIN_PATH ?= `which $(GRPC_CPP_PLUGIN)`
@@ -14,7 +14,9 @@ TEST_PATH = test
 vpath %.proto $(PROTOS_PATH)
 
 PROTOS = $(PROTOS_PATH)/mykafka.proto
-SOURCES = $(SRC_PATH)/commitlog/Index.cc
+SOURCES = \
+	$(SRC_PATH)/commitlog/Index.cc \
+	$(SRC_PATH)/commitlog/Utils.cc
 HEADERS = $(SOURCES:.cc=.hh)
 
 CLIENT_SRC = $(SRC_PATH)/client.cc

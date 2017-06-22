@@ -7,6 +7,9 @@ message Error
   enum ErrCode
   {
     OK = 0;
+    INVALID_FILENAME = 1;
+    FILE_NOT_FOUND = 2;
+    FILE_ERROR = 3;
   }
   ErrCode code = 1;
   string msg = 2;
