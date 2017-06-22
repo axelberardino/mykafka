@@ -22,7 +22,10 @@ BOOST_AUTO_TEST_CASE(test_index)
   const int64_t total_entries = 10;
   const int64_t size = total_entries * CommitLog::Index::ENTRY_WIDTH;
   CommitLog::Index index(tmp_file, size, 0);
-  auto res = index.create();
+  auto res = index.deleteIndex();
+  BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
+
+  res = index.create();
   BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
 
   struct stat buf;
@@ -47,15 +50,18 @@ BOOST_AUTO_TEST_CASE(test_index)
   BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
 
   int i = 0;
+  Entry got_entry{0, 0};
   for (auto& entry : entries)
   {
-    Entry got_entry{0, 0};
     res = index.read(got_entry.offset, got_entry.position, i * CommitLog::Index::ENTRY_WIDTH);
     BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
     BOOST_CHECK_EQUAL(entry.offset, got_entry.offset);
     BOOST_CHECK_EQUAL(entry.position, got_entry.position);
     ++i;
   }
+  // Check for overflow detection
+  res = index.read(got_entry.offset, got_entry.position, i * CommitLog::Index::ENTRY_WIDTH);
+  BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::INDEX_ERROR, res.msg());
 
   res = index.sanityCheck();
   BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());

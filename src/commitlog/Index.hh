@@ -27,12 +27,12 @@ namespace CommitLog
   class Index
   {
   public:
-    static const uint64_t DEFAULT_SIZE  = 10 * 1024 * 1024;
-    static const uint64_t OFFSET_WIDTH  = 4;
-    static const uint64_t OFFSET_OFFSET = 0;
-    static const uint64_t POSITION_WIDTH  = 4;
-    static const uint64_t POSITION_OFFSET = OFFSET_WIDTH;
-    static const uint64_t ENTRY_WIDTH = OFFSET_WIDTH + POSITION_WIDTH;
+    static const int64_t DEFAULT_SIZE  = 10 * 1024 * 1024;
+    static const int64_t OFFSET_WIDTH  = 4;
+    static const int64_t OFFSET_OFFSET = 0;
+    static const int64_t POSITION_WIDTH  = 4;
+    static const int64_t POSITION_OFFSET = OFFSET_WIDTH;
+    static const int64_t ENTRY_WIDTH = OFFSET_WIDTH + POSITION_WIDTH;
 
   public:
     /*!
@@ -43,6 +43,10 @@ namespace CommitLog
     ** @param base_offset The base offset.
     */
     Index(const std::string& filename, int64_t bytes, int64_t base_offset);
+
+    /*!
+    ** Close all files own.
+    */
     ~Index();
 
     /*!
@@ -105,11 +109,41 @@ namespace CommitLog
     std::string filename() const;
 
     /*!
+    ** Truncate at number of entries.
+    **
+    ** @param nb The number where to truncate.
+    **
+    ** @return Error code 0 if no error, or a detailed error.
+    */
+    mykafka::Error truncateEntries(int64_t nb);
+
+    /*!
     ** Get the file descriptor.
     **
     ** @return The file name.
     */
     int fd() const;
+
+    /*!
+    ** Get the max size of the index.
+    **
+    ** @return 
+    */
+    int64_t maxSize() const;
+
+    /*!
+    ** Get the internal base offset.
+    **
+    ** @return The base offset.
+    */
+    int64_t baseOffset() const;
+
+    /*!
+    ** Physically remove index file.
+    **
+    ** @return Error code 0 if no error, or a detailed error.
+    */
+    mykafka::Error deleteIndex();
 
   private:
     const int64_t size_;

@@ -70,7 +70,7 @@ namespace CommitLog
     {
       if (::close(fd_) < 0)
         return Utils::err(mykafka::Error::FILE_ERROR,
-                          "Can't close during failed write 0 the index end " + filename_ + "!");
+                          "Can't close during failed write 0 at the index end " + filename_ + "!");
       return Utils::err(mykafka::Error::FILE_ERROR, "Can't write at index end " + filename_ + "!");
     }
 
@@ -92,6 +92,10 @@ namespace CommitLog
     const int32_t rel_offset = relativeOffset(offset, base_offset_);
     const int32_t rel_position = position;
     boost::lock_guard<boost::shared_mutex> lock(mutex_);
+
+    if (position_ >= size_)
+      return Utils::err(mykafka::Error::INDEX_ERROR, "Write overflow!");
+
     *reinterpret_cast<int32_t*>(static_cast<char*>(addr_) + position_) = rel_offset;
     position_ += OFFSET_WIDTH;
     *reinterpret_cast<int32_t*>(static_cast<char*>(addr_) + position_) = rel_position;
@@ -104,6 +108,9 @@ namespace CommitLog
   Index::read(int64_t& rel_offset, int64_t& rel_position, int64_t offset) const
   {
     boost::shared_lock<boost::shared_mutex> lock(mutex_);
+    if (offset > size_ - ENTRY_WIDTH)
+      return Utils::err(mykafka::Error::INDEX_ERROR, "Write overflow!");
+
     rel_offset = *reinterpret_cast<int32_t*>(static_cast<char*>(addr_) + offset) + base_offset_;
     rel_position = *reinterpret_cast<int32_t*>(static_cast<char*>(addr_) + offset + OFFSET_WIDTH);
 
@@ -163,6 +170,18 @@ namespace CommitLog
     return Utils::err(mykafka::Error::OK);
   }
 
+  mykafka::Error
+  Index::truncateEntries(int64_t nb)
+  {
+    boost::lock_guard<boost::shared_mutex> lock(mutex_);
+    if ((nb * ENTRY_WIDTH) > position_)
+      return Utils::err(mykafka::Error::INDEX_ERROR, "Invalid truncate number!");
+
+    position_ = nb * ENTRY_WIDTH;
+
+    return Utils::err(mykafka::Error::OK);
+  }
+
   std::string
   Index::filename() const
   {
@@ -173,5 +192,21 @@ namespace CommitLog
   Index::fd() const
   {
     return fd_;
+  }
+
+  int64_t
+  Index::baseOffset() const
+  {
+    return base_offset_;
+  }
+
+  mykafka::Error
+  Index::deleteIndex()
+  {
+    if (::unlink(filename_.c_str()) < 0)
+      return Utils::err(mykafka::Error::FILE_ERROR,
+                        "Can't delete index file " + filename_ + "!");
+
+    return Utils::err(mykafka::Error::OK);
   }
 } // CommitLog

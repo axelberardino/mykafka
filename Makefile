@@ -16,6 +16,7 @@ vpath %.proto $(PROTOS_PATH)
 PROTOS = $(PROTOS_PATH)/mykafka.proto
 SOURCES = \
 	$(SRC_PATH)/commitlog/Index.cc \
+	$(SRC_PATH)/commitlog/Segment.cc \
 	$(SRC_PATH)/commitlog/Utils.cc
 HEADERS = $(SOURCES:.cc=.hh)
 
@@ -33,13 +34,13 @@ SERVER = mykafka-server
 
 all: system-check $(CLIENT) $(SERVER)
 
-$(CLIENT): $(GRPC_SRC) $(PB_SRC) $(OBJ) $(CLIENT_OBJ)
+$(CLIENT): $(GRPC_SRC) $(PB_SRC) $(OBJ) $(CLIENT_OBJ) $(HEADERS)
 	$(CXX) $(OBJ) $(CLIENT_OBJ) $(LDFLAGS) -o $@
 
-$(SERVER): $(GRPC_SRC) $(PB_SRC) $(OBJ) $(SERVER_OBJ)
+$(SERVER): $(GRPC_SRC) $(PB_SRC) $(OBJ) $(SERVER_OBJ) $(HEADERS)
 	$(CXX) $(OBJ) $(SERVER_OBJ) $(LDFLAGS) -o $@
 
-Makefile.deps: $(GRPC_SRC) $(PB_SRC) $(SOURCES) $(HEADER) $(CLIENT_SRC) $(SERVER_SRC)
+Makefile.deps: $(GRPC_SRC) $(PB_SRC) $(SOURCES) $(HEADERS) $(CLIENT_SRC) $(SERVER_SRC)
 	$(CXX) $(CXXFLAGS) -MM $(SOURCES) $(CLIENT_SRC) $(SERVER_SRC) > Makefile.deps
 
 .PRECIOUS: %.o
