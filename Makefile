@@ -58,7 +58,7 @@ $(TEST_PATH)/index-test: $(SOURCES) $(OBJ) $(SRC_PATH)/commitlog/Index_Test.o
 	$(CXX) $(OBJ) $(SRC_PATH)/commitlog/Index_Test.o $(LDFLAGS) -lboost_unit_test_framework -o $@
 
 check-test:
-	mkdir $(TEST_PATH)
+	mkdir -p $(TEST_PATH)
 
 index-test: check-test $(TEST_PATH)/index-test
 	$(TEST_PATH)/$@ --log_level=test_suite
