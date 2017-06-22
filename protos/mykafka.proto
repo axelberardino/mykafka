@@ -10,6 +10,7 @@ message Error
     INVALID_FILENAME = 1;
     FILE_NOT_FOUND = 2;
     FILE_ERROR = 3;
+    INDEX_ERROR = 4;
   }
   ErrCode code = 1;
   string msg = 2;

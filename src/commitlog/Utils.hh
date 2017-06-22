@@ -38,7 +38,7 @@ namespace CommitLog
     **
     ** @return A custom error.
     */
-    mykafka::Error Err(mykafka::Error_ErrCode code);
+    mykafka::Error err(mykafka::Error_ErrCode code);
   }
 }
 

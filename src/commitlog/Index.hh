@@ -62,22 +62,59 @@ namespace CommitLog
     */
     mykafka::Error write(int64_t offset, int64_t position);
 
-  private:
-    // struct Entry
-    // {
-    //   Entry();
-    //   uint64_t offset_;
-    //   uint64_t position_;
-    // };
+    /*!
+    ** Read an entry from the index.
+    **
+    ** @param rel_offset The offset to get.
+    ** @param rel_position The position to get.
+    ** @param offset The base offset.
+    **
+    ** @return Error code 0 if no error, or a detailed error.
+    */
+    mykafka::Error read(int64_t& rel_offset, int64_t& rel_position, int64_t offset) const;
+
+    /*!
+    ** Force a file sync.
+    **
+    ** @return Error code 0 if no error, or a detailed error.
+    */
+    mykafka::Error sync();
+
+    /*!
+    ** Close the index file (also force sync and a resize).
+    **
+    ** @return Error code 0 if no error, or a detailed error.
+    */
+    mykafka::Error close();
+
+    /*!
+    ** Check if index is corrupted.
+    **
+    ** @return Error code 0 if no error, or a detailed error.
+    */
+    mykafka::Error sanityCheck() const;
+
+    /*!
+    ** Get the file name of the index.
+    **
+    ** @return The file name.
+    */
+    std::string filename() const;
+
+    /*!
+    ** Get the file descriptor.
+    **
+    ** @return The file name.
+    */
+    int fd() const;
 
   private:
-    int64_t bytes_;
     int64_t base_offset_;
     int64_t position_;
     int fd_;
-    int64_t* addr_;
+    int32_t* addr_;
     std::string filename_;
-    boost::shared_mutex mutex_;
+    mutable boost::shared_mutex mutex_;
   };
 } // CommitLog
 
