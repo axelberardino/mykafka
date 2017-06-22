@@ -5,3 +5,4 @@ grpc
 *.deps
 mykafka-client
 mykafka-server
+test

@@ -9,6 +9,7 @@ GRPC_CPP_PLUGIN_PATH ?= `which $(GRPC_CPP_PLUGIN)`
 
 PROTOS_PATH = protos
 SRC_PATH = src
+TEST_PATH = test
 
 vpath %.proto $(PROTOS_PATH)
 
@@ -51,9 +52,10 @@ Makefile.deps: $(GRPC_SRC) $(PB_SRC) $(SOURCES) $(HEADER) $(CLIENT_SRC) $(SERVER
 %.pb.cc: %.proto
 	$(PROTOC) -I $(PROTOS_PATH) --cpp_out=$(PROTOS_PATH) $<
 
-index-test: $(SOURCES) $(OBJ) $(SRC_PATH)/commitlog/Index_Test.o
-	$(CXX) $(OBJ) $(SRC_PATH)/commitlog/Index_Test.o $(LDFLAGS) -lboost_unit_test_framework -o test/$@
-	./test/$@ --log_level=test_suite
+$(TEST_PATH)/index-test: $(SOURCES) $(OBJ) $(SRC_PATH)/commitlog/Index_Test.o
+	$(CXX) $(OBJ) $(SRC_PATH)/commitlog/Index_Test.o $(LDFLAGS) -lboost_unit_test_framework -o $@
+index-test: $(TEST_PATH)/index-test
+	./$(TEST_PATH)/$@ --log_level=test_suite
 
 test: index-test
 
