@@ -19,23 +19,20 @@ namespace CommitLog
     }
   } // namespace
 
-  Index::Index()
-    : base_offset_(0), position_(0),
-      fd_(0), addr_(0), filename_(), mutex_()
+  Index::Index(const std::string& filename, int64_t size, int64_t base_offset)
+    : size_(size != 0 ? size : DEFAULT_SIZE), base_offset_(base_offset), position_(0),
+      fd_(0), addr_(0), filename_(filename), mutex_()
   {
   }
 
   Index::~Index()
   {
+    close();
   }
 
   mykafka::Error
-  Index::create(const std::string& filename, int64_t bytes, int64_t base_offset)
+  Index::create()
   {
-    bytes = bytes != 0 ? bytes : DEFAULT_SIZE;
-    filename_ = filename;
-    base_offset_ =  base_offset;
-
     mykafka::Error err;
     if (filename_.empty())
       return Utils::err(mykafka::Error::INVALID_FILENAME, "Empty index filename given!");
@@ -54,15 +51,30 @@ namespace CommitLog
     }
 
     position_ = buf.st_size;
-    if (ftruncate(fd_, Utils::roundDownToMultiple(bytes, ENTRY_WIDTH) < 0))
+    const int64_t rounded_size = Utils::roundDownToMultiple(size_ /*+ENTRY_WIDTH*/, ENTRY_WIDTH);
+    if (ftruncate(fd_, rounded_size) < 0)
     {
       if (::close(fd_) < 0)
         return Utils::err(mykafka::Error::FILE_ERROR,
                           "Can't close during failed resize index " + filename_ + "!");
       return Utils::err(mykafka::Error::FILE_ERROR, "Can't resize index " + filename_ + "!");
     }
+    if (::lseek(fd_, rounded_size - 1, SEEK_SET) < 0)
+    {
+      if (::close(fd_) < 0)
+        return Utils::err(mykafka::Error::FILE_ERROR,
+                          "Can't close during failed seek index " + filename_ + "!");
+      return Utils::err(mykafka::Error::FILE_ERROR, "Can't seek index " + filename_ + "!");
+    }
+    if (::write(fd_, "", 1) < 0)
+    {
+      if (::close(fd_) < 0)
+        return Utils::err(mykafka::Error::FILE_ERROR,
+                          "Can't close during failed write 0 the index end " + filename_ + "!");
+      return Utils::err(mykafka::Error::FILE_ERROR, "Can't write at index end " + filename_ + "!");
+    }
 
-    addr_ = static_cast<int32_t*>(::mmap(0, buf.st_size, PROT_READ | PROT_WRITE,
+    addr_ = static_cast<int32_t*>(::mmap(0, size_, PROT_READ | PROT_WRITE,
                                          MAP_SHARED, fd_, 0 /*position ?*/));
     if (addr_ == MAP_FAILED)
     {
@@ -119,7 +131,7 @@ namespace CommitLog
     if (ftruncate(fd_, position_) < 0)
       return Utils::err(mykafka::Error::FILE_ERROR, "Can't resize index " + filename_ + "!");
 
-    if (munmap(addr_, position_) < 0)
+    if (munmap(addr_, size_) < 0)
       return Utils::err(mykafka::Error::FILE_ERROR, "Can't unmap index " + filename_ + "!");
 
     if (::close(fd_))

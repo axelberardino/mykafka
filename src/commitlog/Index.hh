@@ -35,7 +35,14 @@ namespace CommitLog
     static const uint64_t ENTRY_WIDTH = OFFSET_WIDTH + POSITION_WIDTH;
 
   public:
-    Index();
+    /*!
+    ** Initilise a new index.
+    **
+    ** @param filename The file name.
+    ** @param bytes The bytes
+    ** @param base_offset The base offset.
+    */
+    Index(const std::string& filename, int64_t bytes, int64_t base_offset);
     ~Index();
 
     /*!
@@ -44,13 +51,9 @@ namespace CommitLog
     ** Open a new file (or an existing one).
     ** Resize it to a defined size before mmap'ing it.
     **
-    ** @param filename The file name.
-    ** @param bytes The bytes
-    ** @param base_offset The base offset.
-    **
     ** @return Error code 0 if no error, or a detailed error.
     */
-    mykafka::Error create(const std::string& filename, int64_t bytes, int64_t base_offset);
+    mykafka::Error create();
 
     /*!
     ** Write a new entry into the index.
@@ -109,11 +112,14 @@ namespace CommitLog
     int fd() const;
 
   private:
-    int64_t base_offset_;
+    const int64_t size_;
+    const int64_t base_offset_;
+  public:
     int64_t position_;
+  private:
     int fd_;
     int32_t* addr_;
-    std::string filename_;
+    const std::string filename_;
     mutable boost::shared_mutex mutex_;
   };
 } // CommitLog
