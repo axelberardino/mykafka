@@ -74,8 +74,7 @@ namespace CommitLog
       return Utils::err(mykafka::Error::FILE_ERROR, "Can't write at index end " + filename_ + "!");
     }
 
-    addr_ = static_cast<int32_t*>(::mmap(0, size_, PROT_READ | PROT_WRITE,
-                                         MAP_SHARED, fd_, 0 /*position ?*/));
+    addr_ = ::mmap(0, size_, PROT_READ | PROT_WRITE, MAP_SHARED, fd_, 0 /*position ?*/);
     if (addr_ == MAP_FAILED)
     {
       if (::close(fd_) < 0)
@@ -93,10 +92,10 @@ namespace CommitLog
     const int32_t rel_offset = relativeOffset(offset, base_offset_);
     const int32_t rel_position = position;
     boost::lock_guard<boost::shared_mutex> lock(mutex_);
-    *(addr_ + static_cast<int32_t>(position_)) = rel_offset;
-    ++position_;
-    *(addr_ + static_cast<int32_t>(position_)) = rel_position;
-    ++position_;
+    *reinterpret_cast<int32_t*>(static_cast<char*>(addr_) + position_) = rel_offset;
+    position_ += OFFSET_WIDTH;
+    *reinterpret_cast<int32_t*>(static_cast<char*>(addr_) + position_) = rel_position;
+    position_ += POSITION_WIDTH;
 
     return Utils::err(mykafka::Error::OK);
   }
@@ -105,8 +104,8 @@ namespace CommitLog
   Index::read(int64_t& rel_offset, int64_t& rel_position, int64_t offset) const
   {
     boost::shared_lock<boost::shared_mutex> lock(mutex_);
-    rel_offset = *(addr_ + offset) + base_offset_;
-    rel_position = *(addr_ + offset + 1);
+    rel_offset = *reinterpret_cast<int32_t*>(static_cast<char*>(addr_) + offset) + base_offset_;
+    rel_position = *reinterpret_cast<int32_t*>(static_cast<char*>(addr_) + offset + OFFSET_WIDTH);
 
     return Utils::err(mykafka::Error::OK);
   }

@@ -36,7 +36,7 @@ namespace CommitLog
 
   public:
     /*!
-    ** Initilise a new index.
+    ** Initialise a new index.
     **
     ** @param filename The file name.
     ** @param bytes The bytes
@@ -118,7 +118,7 @@ namespace CommitLog
     int64_t position_;
   private:
     int fd_;
-    int32_t* addr_;
+    void* addr_;
     const std::string filename_;
     mutable boost::shared_mutex mutex_;
   };
