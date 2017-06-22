@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE(test_index)
 
   std::vector<Entry> entries;
   for (int i = 0; i < total_entries; ++i)
-    entries.push_back({i, i * 100});
+    entries.push_back({i, i * 123456789});
 
   for (auto& entry : entries)
   {
@@ -72,9 +72,10 @@ BOOST_AUTO_TEST_CASE(test_index)
   BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::INDEX_ERROR, res.msg());
   --index.position_;
 
-  res = index.close();
-  BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
-
   fstat(index.fd(), &buf);
   BOOST_CHECK_EQUAL(total_entries * CommitLog::Index::ENTRY_WIDTH, buf.st_size);
+
+  res = index.close();
+  BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
+  BOOST_CHECK_EQUAL_MSG(index.fd(), -1, "After a close, fd should be at -1");
 }

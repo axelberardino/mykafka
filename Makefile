@@ -32,12 +32,12 @@ SERVER_OBJ = $(SERVER_SRC:.cc=.o)
 CLIENT = mykafka-client
 SERVER = mykafka-server
 
-all: system-check $(CLIENT) $(SERVER)
+all: $(CLIENT) $(SERVER)
 
-$(CLIENT): $(GRPC_SRC) $(PB_SRC) $(OBJ) $(CLIENT_OBJ) $(HEADERS)
+$(CLIENT): system-check $(GRPC_SRC) $(PB_SRC) $(OBJ) $(CLIENT_OBJ) $(HEADERS)
 	$(CXX) $(OBJ) $(CLIENT_OBJ) $(LDFLAGS) -o $@
 
-$(SERVER): $(GRPC_SRC) $(PB_SRC) $(OBJ) $(SERVER_OBJ) $(HEADERS)
+$(SERVER): system-check $(GRPC_SRC) $(PB_SRC) $(OBJ) $(SERVER_OBJ) $(HEADERS)
 	$(CXX) $(OBJ) $(SERVER_OBJ) $(LDFLAGS) -o $@
 
 Makefile.deps: $(GRPC_SRC) $(PB_SRC) $(SOURCES) $(HEADERS) $(CLIENT_SRC) $(SERVER_SRC)
@@ -57,10 +57,6 @@ Makefile.deps: $(GRPC_SRC) $(PB_SRC) $(SOURCES) $(HEADERS) $(CLIENT_SRC) $(SERVE
 
 $(TEST_PATH)/index-test: $(SOURCES) $(OBJ) $(SRC_PATH)/commitlog/Index_Test.o
 	$(CXX) $(OBJ) $(SRC_PATH)/commitlog/Index_Test.o $(LDFLAGS) -lboost_unit_test_framework -o $@
-
-check-test:
-	mkdir -p $(TEST_PATH)
-
 index-test: check-test $(TEST_PATH)/index-test
 	$(TEST_PATH)/$@ --log_level=test_suite
 
@@ -76,17 +72,24 @@ distclean: clean
 PROTOC_CMD = which $(PROTOC)
 PROTOC_CHECK_CMD = $(PROTOC) --version | grep -q libprotoc.3
 PLUGIN_CHECK_CMD = which $(GRPC_CPP_PLUGIN)
+TEST_DIR_CHECK_CMD = stat $(TEST_PATH)
 HAS_PROTOC = $(shell $(PROTOC_CMD) > /dev/null && echo true || echo false)
 ifeq ($(HAS_PROTOC),true)
 HAS_VALID_PROTOC = $(shell $(PROTOC_CHECK_CMD) 2> /dev/null && echo true || echo false)
 endif
 HAS_PLUGIN = $(shell $(PLUGIN_CHECK_CMD) > /dev/null && echo true || echo false)
+HAS_TEST_DIR = $(shell $(TEST_DIR_CHECK_CMD) > /dev/null && echo true || echo false)
 
 SYSTEM_OK = false
 ifeq ($(HAS_VALID_PROTOC),true)
 ifeq ($(HAS_PLUGIN),true)
 SYSTEM_OK = true
 endif
+endif
+
+check-test:
+ifneq ($(HAS_TEST_DIR),true)
+	mkdir -p $(TEST_PATH)
 endif
 
 system-check:

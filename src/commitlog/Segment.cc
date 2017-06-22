@@ -27,7 +27,7 @@ namespace CommitLog
 
   Segment::Segment(const std::string& filename, int64_t base_offset, int64_t max_size)
     : index_(getIndexFilename(filename, base_offset), 0 /* FIXME max_size ?*/, base_offset),
-      fd_(0), next_offset_(0), position_(0), max_size_(max_size),
+      fd_(-1), next_offset_(base_offset), position_(0), max_size_(max_size),
       filename_(getLogFilename(filename, base_offset)), mutex_()
   {
   }
@@ -74,6 +74,7 @@ namespace CommitLog
       return Utils::err(mykafka::Error::FILE_ERROR,
                         "Can't close log file " + filename_ + "!");
 
+    fd_ = -1;
     return index_.close();
   }
 

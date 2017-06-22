@@ -21,7 +21,7 @@ namespace CommitLog
 
   Index::Index(const std::string& filename, int64_t size, int64_t base_offset)
     : size_(size != 0 ? size : DEFAULT_SIZE), base_offset_(base_offset), position_(0),
-      fd_(0), addr_(0), filename_(filename), mutex_()
+      fd_(-1), addr_(0), filename_(filename), mutex_()
   {
   }
 
@@ -143,6 +143,8 @@ namespace CommitLog
     if (::close(fd_))
       return Utils::err(mykafka::Error::FILE_ERROR,
                         "Can't close " + filename_ + "!");
+
+    fd_ = -1;
     return Utils::err(mykafka::Error::OK);
   }
 
