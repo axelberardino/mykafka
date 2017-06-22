@@ -1,0 +1,7 @@
+grpc
+*.o
+*.pb.cc
+*.pb.h
+*.deps
+mykafka-client
+mykafka-server
