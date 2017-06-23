@@ -19,6 +19,16 @@ namespace
       res += s.size() + CommitLog::Segment::HEADER_SIZE;
     return res;
   }
+
+  std::string vecToString(const std::vector<char>& tab)
+  {
+    std::string res(tab.size(), 0);
+    for (uint32_t i = 0; i < tab.size(); ++i)
+      res[i] = tab[i];
+    res[tab.size()] = 0;
+
+    return res;
+  }
 } // namespace
 
 BOOST_AUTO_TEST_CASE(test_segment)
@@ -54,15 +64,36 @@ BOOST_AUTO_TEST_CASE(test_segment)
   fstat(segment.segmentFd(), &buf);
   BOOST_CHECK_EQUAL(size, buf.st_size);
 
+  int64_t rel_offset = -1;
+  int64_t rel_position = -1;
+  for (int64_t i = 0; i < static_cast<int64_t>(payloads.size()); ++i)
+  {
+    res = segment.findEntry(rel_offset, rel_position, i);
+    BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
+    BOOST_CHECK_EQUAL(rel_offset, i);
+  }
+  res = segment.findEntry(rel_offset, rel_position, payloads.size());
+  BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
+  BOOST_CHECK_EQUAL(rel_offset, -1);
+
+  std::cout << "CHECKING READ PAYLOAD" << std::endl;
   int offset = 0;
-  std::string got_payload;
+  std::vector<char> raw_got_payload;
   for (auto& payload : payloads)
   {
-    res = segment.readAt(got_payload, offset);
+    res = segment.readAt(raw_got_payload, offset);
+    const std::string got_payload = vecToString(raw_got_payload);
     BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
     BOOST_CHECK_EQUAL(payload, got_payload);
+
+    std::cout << payload << " (" << payload.size() << ") "
+              << got_payload << " (" << got_payload.size() << ")" << std::endl;
+
     ++offset;
   }
+
+  res = segment.dump(std::cout);
+  BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
 
   res = segment.close();
   BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());

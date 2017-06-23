@@ -2,9 +2,9 @@
 # define COMMIT_LOG_SEGMENT_HH_
 
 # include <boost/thread/mutex.hpp>
+# include <vector>
 
 # include "mykafka.pb.h"
-
 # include "commitlog/Index.hh"
 
 namespace CommitLog
@@ -93,7 +93,7 @@ namespace CommitLog
     **
     ** @return Error code 0 if no error, or a detailed error.
     */
-    mykafka::Error readAt(std::string& payload, int64_t offset);
+    mykafka::Error readAt(std::vector<char>& payload, int64_t offset);
 
     /*!
     ** Check if segment is full
@@ -117,8 +117,8 @@ namespace CommitLog
     mykafka::Error deleteSegment();
 
     /*!
-    ** Try to find an entry at a given offset.
-    ** If not offset is found, then rel_offset value will be -1
+    ** Try to find an entry at a given offset (using a binary search).
+    ** If not offset is found, then rel_offset value will be -1.
     **
     ** @param rel_offset The offset of the entry.
     ** @param rel_position The position of the entry.
@@ -142,6 +142,16 @@ namespace CommitLog
     ** @return The file descriptor.
     */
     int indexFd() const;
+
+    //FIXME
+    mykafka::Error dump(std::ostream& out) const;
+
+  private:
+    struct Entry
+    {
+      int64_t offset;
+      int32_t size;
+    } __attribute__((packed));
 
   private:
     Index index_;

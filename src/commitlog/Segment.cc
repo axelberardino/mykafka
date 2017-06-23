@@ -5,6 +5,7 @@
 #include <linux/limits.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <cassert>
 
 namespace CommitLog
 {
@@ -30,6 +31,7 @@ namespace CommitLog
       fd_(-1), next_offset_(base_offset), position_(0), max_size_(max_size),
       filename_(getLogFilename(filename, base_offset)), mutex_()
   {
+    assert(sizeof (Entry) == HEADER_SIZE);
   }
 
   Segment::~Segment()
@@ -137,13 +139,10 @@ namespace CommitLog
   {
     boost::lock_guard<boost::mutex> lock(mutex_);
 
-    // FIXME write struct
-    if (::write(fd_, &next_offset_, sizeof(next_offset_)) != sizeof(next_offset_))
+    const Entry entry{next_offset_, payload_size};
+    if (::write(fd_, &entry, HEADER_SIZE) != HEADER_SIZE)
       return Utils::err(mykafka::Error::LOG_ERROR, "Can't write payload"
-                        " offset to log " + filename_ + "!");
-    if (::write(fd_, &payload_size, sizeof(payload_size)) != sizeof(payload_size))
-      return Utils::err(mykafka::Error::LOG_ERROR, "Can't write payload"
-                        " size to log " + filename_ + "!");
+                        " offset/size to log " + filename_ + "!");
     if (::write(fd_, payload, payload_size) != payload_size)
       return Utils::err(mykafka::Error::LOG_ERROR, "Can't write payload"
                         " to log " + filename_ + "!");
@@ -165,7 +164,7 @@ namespace CommitLog
   }
 
   mykafka::Error
-  Segment::readAt(std::string& payload, int64_t offset)
+  Segment::readAt(std::vector<char>& payload, int64_t offset)
   {
     boost::lock_guard<boost::mutex> lock(mutex_);
 
@@ -174,27 +173,28 @@ namespace CommitLog
     auto res = findEntry(rel_offset, rel_position, offset);
     if (res.code() != mykafka::Error::OK)
       return res;
+    if (rel_offset == -1 || rel_position == -1)
+      return Utils::err(mykafka::Error::LOG_ERROR, "Can't find offset " +
+                        std::to_string(offset) +
+                        " when reading log " + filename_ + "!");
 
     if (::lseek(fd_read_, rel_position, SEEK_CUR) < 0)
-      return Utils::err(mykafka::Error::LOG_ERROR, "Can't seek to "
-                        "payload when reading " + filename_ + "!");
+      return Utils::err(mykafka::Error::LOG_ERROR, "Can't seek at " +
+                        std::to_string(rel_position) +
+                        " in payload when reading " + filename_ + "!");
 
-    int64_t got_offset = -1;
-    int32_t got_size = -1;
-    if (::read(fd_read_, &got_offset, sizeof(got_offset)) < 0 || got_offset < 0)
-      return Utils::err(mykafka::Error::LOG_ERROR, "Can't read offset "
-                        "from log " + filename_ + "!");
-    if (::read(fd_read_, &got_size, sizeof(got_size)) < 0 || got_size < 0)
-      return Utils::err(mykafka::Error::LOG_ERROR, "Can't read size "
+    Entry entry{-1, -1};
+    if (::read(fd_read_, &entry, HEADER_SIZE) < 0 || entry.offset < 0 || entry.size < 0)
+      return Utils::err(mykafka::Error::LOG_ERROR, "Can't read offset/size "
                         "from log " + filename_ + "!");
 
-    auto buffer = std::make_shared<char>(got_size);
-    auto bytes = ::read(fd_read_, buffer.get(), got_size);
-    if (bytes != got_size)
+    std::cout << "off: " << entry.offset << ", size: " << entry.size << std::endl;
+    payload.resize(entry.size);
+    auto bytes = ::read(fd_read_, &payload[0], entry.size);
+    if (bytes != entry.size)
       return Utils::err(mykafka::Error::LOG_ERROR, "Can't read payload "
-                        "from log " + filename_ + "!");
-
-    payload = std::string(buffer.get());
+                        "from log " + filename_ + "! (" +
+                        std::to_string(bytes) + " != " + std::to_string(entry.size) + ")");
 
     return Utils::err(mykafka::Error::OK);
   }
@@ -237,14 +237,12 @@ namespace CommitLog
   mykafka::Error
   Segment::findEntry(int64_t& rel_offset, int64_t& rel_position, int64_t search_offset) const
   {
-    boost::lock_guard<boost::mutex> lock(mutex_);
-
     int64_t begin = 0;
     int64_t end = next_offset_ - 1;
     int64_t pos = (begin + end) / 2;
     rel_offset = -1;
 
-    while (begin < end && rel_offset != search_offset)
+    while (begin <= end && rel_offset != search_offset)
     {
       auto res = index_.read(rel_offset, rel_position, pos * CommitLog::Index::ENTRY_WIDTH);
       if (res.code() != mykafka::Error::OK)
@@ -275,5 +273,50 @@ namespace CommitLog
   Segment::indexFd() const
   {
     return index_.fd();
+  }
+
+  mykafka::Error
+  Segment::dump(std::ostream& out) const
+  {
+    boost::lock_guard<boost::mutex> lock(mutex_);
+
+    int64_t rel_offset = -1;
+    int64_t rel_position = -1;
+    for (int64_t offset = 0; offset < next_offset_; ++offset)
+    {
+      auto res = index_.read(rel_offset, rel_position, offset * CommitLog::Index::ENTRY_WIDTH);
+      if (res.code() != mykafka::Error::OK)
+        return res;
+      out << "For offset " << offset << ", using rel_offset=" << rel_offset
+          << " and rel_position=" << rel_position << "\n";
+
+      if (::lseek(fd_read_, rel_position, SEEK_CUR) < 0)
+        return Utils::err(mykafka::Error::LOG_ERROR, "Can't seek at " +
+                          std::to_string(rel_position) +
+                          " in payload when reading " + filename_ + "!");
+
+      int64_t got_offset = -1;
+      int32_t got_size = -1;
+      if (::read(fd_read_, &got_offset, sizeof(got_offset)) < 0 || got_offset < 0)
+        return Utils::err(mykafka::Error::LOG_ERROR, "Can't read offset "
+                          "from log " + filename_ + "!");
+      if (::read(fd_read_, &got_size, sizeof(got_size)) < 0 || got_size < 0)
+        return Utils::err(mykafka::Error::LOG_ERROR, "Can't read size "
+                          "from log " + filename_ + "!");
+      std::vector<char> payload;
+      payload.resize(got_size);
+      auto bytes = ::read(fd_read_, &payload[0], got_size);
+      if (bytes != got_size)
+        return Utils::err(mykafka::Error::LOG_ERROR, "Can't read payload "
+                          "from log " + filename_ + "! (" +
+                          std::to_string(bytes) + " != " + std::to_string(got_size) + ")");
+      out << "=> | off: " << got_offset << " | size: "
+          << got_size << " | payload: ";
+      for (char c : payload)
+        out << c;
+      out << "\n";
+    }
+
+    return Utils::err(mykafka::Error::OK);
   }
 } // CommitLog
