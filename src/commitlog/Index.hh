@@ -36,7 +36,7 @@ namespace CommitLog
 
   public:
     /*!
-    ** Initialise a new index.
+    ** Initialize a new index.
     **
     ** @param filename The file name.
     ** @param bytes The bytes

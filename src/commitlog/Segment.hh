@@ -32,7 +32,7 @@ namespace CommitLog
 
   public:
     /*!
-    ** Initialise a new segment.
+    ** Initialize a new segment.
     **
     ** @param filename The file name.
     ** @param base_offset The base offset.
@@ -132,6 +132,20 @@ namespace CommitLog
     ** @return The file descriptor.
     */
     int indexFd() const;
+
+    /*!
+    ** Get the next offset.
+    **
+    ** @return The next offset.
+    */
+    int64_t nextOffset() const;
+
+    /*!
+    ** Get the base offset.
+    **
+    ** @return The base offset.
+    */
+    int64_t baseOffset() const;
 
     /*!
     ** Dump the entire segment into a stream.

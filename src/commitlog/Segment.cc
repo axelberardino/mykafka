@@ -273,6 +273,18 @@ namespace CommitLog
     return index_.fd();
   }
 
+  int64_t
+  Segment::nextOffset() const
+  {
+    return next_offset_;
+  }
+
+  int64_t
+  Segment::baseOffset() const
+  {
+    return index_.baseOffset();
+  }
+
   mykafka::Error
   Segment::dump(std::ostream& out) const
   {

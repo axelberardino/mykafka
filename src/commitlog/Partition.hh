@@ -1,10 +1,12 @@
 #ifndef COMMIT_LOG_PARTITION_HH_
 # define COMMIT_LOG_PARTITION_HH_
 
-# include <boost/thread/shared_mutex.hpp>
-
 # include "commitlog/Segment.hh"
 # include "mykafka.pb.h"
+
+# include <boost/thread/shared_mutex.hpp>
+# include <list>
+# include <atomic>
 
 namespace CommitLog
 {
@@ -24,18 +26,74 @@ namespace CommitLog
   class Partition
   {
   public:
-    Partition();
+    /*!
+    ** Initialize a new partition.
+    **
+    ** @param path The path to the partition.
+    ** @param max_segment_size The max size per segments.
+    ** @param max_partition_size The max total size of this partition.
+    */
+    Partition(const std::string& path, int64_t max_segment_size, int64_t max_partition_size);
+
+    /*!
+    ** Close all files own and free segments.
+    */
     ~Partition();
 
-    // FIXME add clean
+    /*!
+    ** Open existing partition or create a new one.
+    ** Create all directories needed. Reload existing segments
+    ** and create new one if necessary.
+    **
+    ** @return Error code 0 if no error, or a detailed error.
+    */
+    mykafka::Error open();
+
+    mykafka::Error write(const std::string& payload, int64_t& offset);
+    mykafka::Error read(std::vector<char>& payload);
+    mykafka::Error readAt(std::vector<char>& payload, int64_t offset);
+
+    /*!
+    ** Get the newest offset of the partition.
+    **
+    ** @return The newest offset.
+    */
+    int64_t newestOffset() const;
+
+    /*!
+    ** Get the oldest offset of the partition.
+    **
+    ** @return The oldest offset.
+    */
+    int64_t oldestOffset() const;
+
+    /*!
+    ** Get the current segment.
+    **
+    ** @return The active segment.
+    */
+    Segment* activeSegment() const;
+
+    /*!
+    ** Close all segments, and empty the segment
+    ** list (free'ing all segments).
+    **
+    ** @return Error code 0 if no error, or a detailed error.
+    */
+    mykafka::Error close();
+
+    mykafka::Error deletePartition();
+    mykafka::Error truncate();
+    mykafka::Error cleanOldSegments();
 
   private:
     int64_t max_segment_size_;
     int64_t max_partition_size_;
-    Segment* active_segment_;
+    std::atomic<Segment*> active_segment_;
     std::string path_;
     std::string name_;
     std::list<Segment*> segments_;
+    mutable boost::shared_mutex mutex_;
   };
 } // CommitLog
 
