@@ -178,7 +178,7 @@ namespace CommitLog
                         std::to_string(offset) +
                         " when reading log " + filename_ + "!");
 
-    if (::lseek(fd_read_, rel_position, SEEK_CUR) < 0)
+    if (::lseek(fd_read_, rel_position, SEEK_SET) < 0)
       return Utils::err(mykafka::Error::LOG_ERROR, "Can't seek at " +
                         std::to_string(rel_position) +
                         " in payload when reading " + filename_ + "!");
@@ -188,7 +188,6 @@ namespace CommitLog
       return Utils::err(mykafka::Error::LOG_ERROR, "Can't read offset/size "
                         "from log " + filename_ + "!");
 
-    std::cout << "off: " << entry.offset << ", size: " << entry.size << std::endl;
     payload.resize(entry.size);
     auto bytes = ::read(fd_read_, &payload[0], entry.size);
     if (bytes != entry.size)
@@ -290,28 +289,23 @@ namespace CommitLog
       out << "For offset " << offset << ", using rel_offset=" << rel_offset
           << " and rel_position=" << rel_position << "\n";
 
-      if (::lseek(fd_read_, rel_position, SEEK_CUR) < 0)
+      if (::lseek(fd_read_, rel_position, SEEK_SET) < 0)
         return Utils::err(mykafka::Error::LOG_ERROR, "Can't seek at " +
                           std::to_string(rel_position) +
                           " in payload when reading " + filename_ + "!");
-
-      int64_t got_offset = -1;
-      int32_t got_size = -1;
-      if (::read(fd_read_, &got_offset, sizeof(got_offset)) < 0 || got_offset < 0)
-        return Utils::err(mykafka::Error::LOG_ERROR, "Can't read offset "
-                          "from log " + filename_ + "!");
-      if (::read(fd_read_, &got_size, sizeof(got_size)) < 0 || got_size < 0)
-        return Utils::err(mykafka::Error::LOG_ERROR, "Can't read size "
+      Entry entry{-1, -1};
+      if (::read(fd_read_, &entry, HEADER_SIZE) < 0 || entry.offset < 0 || entry.size < 0)
+        return Utils::err(mykafka::Error::LOG_ERROR, "Can't read offset/size "
                           "from log " + filename_ + "!");
       std::vector<char> payload;
-      payload.resize(got_size);
-      auto bytes = ::read(fd_read_, &payload[0], got_size);
-      if (bytes != got_size)
+      payload.resize(entry.size);
+      auto bytes = ::read(fd_read_, &payload[0], entry.size);
+      if (bytes != entry.size)
         return Utils::err(mykafka::Error::LOG_ERROR, "Can't read payload "
                           "from log " + filename_ + "! (" +
-                          std::to_string(bytes) + " != " + std::to_string(got_size) + ")");
-      out << "=> | off: " << got_offset << " | size: "
-          << got_size << " | payload: ";
+                          std::to_string(bytes) + " != " + std::to_string(entry.size) + ")");
+      out << "=> | off: " << entry.offset << " | size: "
+          << entry.size << " | payload: ";
       for (char c : payload)
         out << c;
       out << "\n";

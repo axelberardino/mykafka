@@ -143,7 +143,13 @@ namespace CommitLog
     */
     int indexFd() const;
 
-    //FIXME
+    /*!
+    ** Dump the entire segment into a stream.
+    **
+    ** @param out The output stream.
+    **
+    ** @return Error code 0 if no error, or a detailed error.
+    */
     mykafka::Error dump(std::ostream& out) const;
 
   private:

@@ -12,7 +12,8 @@
 
 namespace
 {
-  int64_t payloadsSize(const std::array<std::string, 10>& payloads)
+  template <typename T>
+  int64_t payloadsSize(const T& payloads)
   {
     int64_t res = 0;
     for (auto& s : payloads)
@@ -76,7 +77,6 @@ BOOST_AUTO_TEST_CASE(test_segment)
   BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
   BOOST_CHECK_EQUAL(rel_offset, -1);
 
-  std::cout << "CHECKING READ PAYLOAD" << std::endl;
   int offset = 0;
   std::vector<char> raw_got_payload;
   for (auto& payload : payloads)
@@ -85,10 +85,6 @@ BOOST_AUTO_TEST_CASE(test_segment)
     const std::string got_payload = vecToString(raw_got_payload);
     BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
     BOOST_CHECK_EQUAL(payload, got_payload);
-
-    std::cout << payload << " (" << payload.size() << ") "
-              << got_payload << " (" << got_payload.size() << ")" << std::endl;
-
     ++offset;
   }
 
