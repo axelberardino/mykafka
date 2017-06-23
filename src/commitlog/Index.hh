@@ -42,7 +42,7 @@ namespace CommitLog
     ** @param bytes The bytes
     ** @param base_offset The base offset.
     */
-    Index(const std::string& filename, int64_t bytes, int64_t base_offset);
+    Index(const std::string& filename, int64_t base_offset, int64_t bytes);
 
     /*!
     ** Close all files own.
@@ -62,23 +62,24 @@ namespace CommitLog
     /*!
     ** Write a new entry into the index.
     **
-    ** @param offset The offset.
+    ** @param absolute_offset The offset (containing base_offset).
     ** @param position The position.
     **
     ** @return Error code 0 if no error, or a detailed error.
     */
-    mykafka::Error write(int64_t offset, int64_t position);
+    mykafka::Error write(int64_t absolute_offset, int64_t position);
 
     /*!
     ** Read an entry from the index.
     **
     ** @param rel_offset The offset to get.
     ** @param rel_position The position to get.
-    ** @param offset The base offset.
+    ** @param relative_offset The offset (not containing base_offset).
     **
     ** @return Error code 0 if no error, or a detailed error.
     */
-    mykafka::Error read(int64_t& rel_offset, int64_t& rel_position, int64_t offset) const;
+    mykafka::Error read(int64_t& rel_offset, int64_t& rel_position,
+                        int64_t relative_offset) const;
 
     /*!
     ** Force a file sync.

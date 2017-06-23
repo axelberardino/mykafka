@@ -11,15 +11,7 @@
 
 namespace CommitLog
 {
-  namespace
-  {
-    inline int32_t relativeOffset(int64_t offset, int64_t base_offset)
-    {
-      return offset - base_offset;
-    }
-  } // namespace
-
-  Index::Index(const std::string& filename, int64_t size, int64_t base_offset)
+  Index::Index(const std::string& filename, int64_t base_offset, int64_t size)
     : size_(size != 0 ? size : DEFAULT_SIZE), base_offset_(base_offset), position_(0),
       fd_(-1), addr_(0), filename_(filename), mutex_()
   {
@@ -51,7 +43,7 @@ namespace CommitLog
     }
 
     position_ = buf.st_size;
-    const int64_t rounded_size = Utils::roundDownToMultiple(size_ /*+ENTRY_WIDTH*/, ENTRY_WIDTH);
+    const int64_t rounded_size = Utils::roundDownToMultiple(size_, ENTRY_WIDTH);
     if (ftruncate(fd_, rounded_size) < 0)
     {
       if (::close(fd_) < 0)
@@ -87,9 +79,9 @@ namespace CommitLog
   }
 
   mykafka::Error
-  Index::write(int64_t offset, int64_t position)
+  Index::write(int64_t absolute_offset, int64_t position)
   {
-    const int32_t rel_offset = relativeOffset(offset, base_offset_);
+    const int32_t rel_offset = absolute_offset - base_offset_;
     const int32_t rel_position = position;
     boost::lock_guard<boost::shared_mutex> lock(mutex_);
 
@@ -107,14 +99,16 @@ namespace CommitLog
   }
 
   mykafka::Error
-  Index::read(int64_t& rel_offset, int64_t& rel_position, int64_t offset) const
+  Index::read(int64_t& rel_offset, int64_t& rel_position, int64_t relative_offset) const
   {
     boost::shared_lock<boost::shared_mutex> lock(mutex_);
-    if (offset > size_ - ENTRY_WIDTH)
+    if (relative_offset > size_ - ENTRY_WIDTH)
       return Utils::err(mykafka::Error::INDEX_ERROR, "Read overflow!");
 
-    rel_offset = *reinterpret_cast<int32_t*>(static_cast<char*>(addr_) + offset) + base_offset_;
-    rel_position = *reinterpret_cast<int32_t*>(static_cast<char*>(addr_) + offset + OFFSET_WIDTH);
+    rel_offset = *reinterpret_cast<int32_t*>(static_cast<char*>(addr_) +
+                                             relative_offset) + base_offset_;
+    rel_position = *reinterpret_cast<int32_t*>(static_cast<char*>(addr_)
+                                               + relative_offset + OFFSET_WIDTH);
 
     return Utils::err(mykafka::Error::OK);
   }
