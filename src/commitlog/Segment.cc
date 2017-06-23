@@ -46,7 +46,7 @@ namespace CommitLog
     if (res.code() != mykafka::Error::OK)
       return res;
 
-    res = index_.sanityCheck();
+    res = index_.sanityCheck(); // Still useful ?
     if (res.code() != mykafka::Error::OK)
       return res;
 
@@ -164,18 +164,18 @@ namespace CommitLog
   }
 
   mykafka::Error
-  Segment::readAt(std::vector<char>& payload, int64_t offset)
+  Segment::readAt(std::vector<char>& payload, int64_t relative_offset)
   {
     boost::lock_guard<boost::mutex> lock(mutex_);
 
     int64_t rel_offset = -1;
     int64_t rel_position = -1;
-    auto res = findEntry(rel_offset, rel_position, offset);
+    auto res = findEntry(rel_offset, rel_position, relative_offset);
     if (res.code() != mykafka::Error::OK)
       return res;
     if (rel_offset == -1 || rel_position == -1)
       return Utils::err(mykafka::Error::LOG_ERROR, "Can't find offset " +
-                        std::to_string(offset) +
+                        std::to_string(relative_offset) +
                         " when reading log " + filename_ + "!");
 
     if (::lseek(fd_read_, rel_position, SEEK_SET) < 0)

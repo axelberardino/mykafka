@@ -89,11 +89,11 @@ namespace CommitLog
     ** Read segment at the specified.
     **
     ** @param payload The payload to append.
-    ** @param offset The offset to read.
+    ** @param relative_offset The offset to read.
     **
     ** @return Error code 0 if no error, or a detailed error.
     */
-    mykafka::Error readAt(std::vector<char>& payload, int64_t offset);
+    mykafka::Error readAt(std::vector<char>& payload, int64_t relative_offset);
 
     /*!
     ** Check if segment is full

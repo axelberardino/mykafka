@@ -21,19 +21,6 @@ namespace
     return res;
   }
 
-  std::string vecToString(const std::vector<char>& tab)
-  {
-    std::string res(tab.size(), 0);
-    for (uint32_t i = 0; i < tab.size(); ++i)
-      res[i] = tab[i];
-    res[tab.size()] = 0;
-
-    return res;
-  }
-} // namespace
-
-BOOST_AUTO_TEST_CASE(test_segment)
-{
   const std::string tmp_path = "/tmp/";
   const std::array<std::string, 10> payloads =
     {
@@ -49,52 +36,78 @@ BOOST_AUTO_TEST_CASE(test_segment)
       "{my_payload:mango, value:00}"
     };
   const int64_t size = payloadsSize(payloads);
-  CommitLog::Segment segment(tmp_path, 0, size);
-  segment.deleteSegment();
 
-  auto res = segment.create();
-  BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
-
-  for (auto& payload : payloads)
+  std::string vecToString(const std::vector<char>& tab)
   {
-    res = segment.write(payload);
-    BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
+    std::string res(tab.size(), 0);
+    for (uint32_t i = 0; i < tab.size(); ++i)
+      res[i] = tab[i];
+    res[tab.size()] = 0;
+
+    return res;
   }
 
-  struct stat buf;
-  fstat(segment.segmentFd(), &buf);
-  BOOST_CHECK_EQUAL(size, buf.st_size);
-
-  int64_t rel_offset = -1;
-  int64_t rel_position = -1;
-  for (int64_t i = 0; i < static_cast<int64_t>(payloads.size()); ++i)
+  void testSegment(int64_t base_offset)
   {
-    res = segment.findEntry(rel_offset, rel_position, i);
+    const int64_t size = payloadsSize(payloads);
+    CommitLog::Segment segment(tmp_path, base_offset, size);
+    segment.deleteSegment();
+
+    auto res = segment.create();
     BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
-    BOOST_CHECK_EQUAL(rel_offset, i);
-  }
-  res = segment.findEntry(rel_offset, rel_position, payloads.size());
-  BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
-  BOOST_CHECK_EQUAL(rel_offset, -1);
 
-  int offset = 0;
-  std::vector<char> raw_got_payload;
-  for (auto& payload : payloads)
-  {
-    res = segment.readAt(raw_got_payload, offset);
-    const std::string got_payload = vecToString(raw_got_payload);
+    for (auto& payload : payloads)
+    {
+      res = segment.write(payload);
+      BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
+    }
+
+    struct stat buf;
+    fstat(segment.segmentFd(), &buf);
+    BOOST_CHECK_EQUAL(size, buf.st_size);
+
+    int64_t rel_offset = -1;
+    int64_t rel_position = -1;
+    for (int64_t i = 0; i < static_cast<int64_t>(payloads.size()); ++i)
+    {
+      res = segment.findEntry(rel_offset, rel_position, i);
+      BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
+      BOOST_CHECK_EQUAL(rel_offset, i);
+    }
+    res = segment.findEntry(rel_offset, rel_position, payloads.size());
     BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
-    BOOST_CHECK_EQUAL(payload, got_payload);
-    ++offset;
+    BOOST_CHECK_EQUAL(rel_offset, -1);
+
+    int offset = 0;
+    std::vector<char> raw_got_payload;
+    for (auto& payload : payloads)
+    {
+      res = segment.readAt(raw_got_payload, offset);
+      const std::string got_payload = vecToString(raw_got_payload);
+      BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
+      BOOST_CHECK_EQUAL(payload, got_payload);
+      ++offset;
+    }
+
+    res = segment.dump(std::cout);
+    BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
+
+    res = segment.close();
+    BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
+    BOOST_CHECK_EQUAL_MSG(segment.segmentFd(), -1,
+                          "After a close, segment fd should be at -1");
+    BOOST_CHECK_EQUAL_MSG(segment.indexFd(), -1,
+                          "After a close, index fd should be at -1");
   }
+} // namespace
 
-  res = segment.dump(std::cout);
-  BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
+BOOST_AUTO_TEST_CASE(test_segment)
+{
+  testSegment(0);
+}
 
-  res = segment.close();
-  BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
-  BOOST_CHECK_EQUAL_MSG(segment.segmentFd(), -1,
-                        "After a close, segment fd should be at -1");
-  BOOST_CHECK_EQUAL_MSG(segment.indexFd(), -1,
-                        "After a close, index fd should be at -1");
+BOOST_AUTO_TEST_CASE(test_segment_with_base_offset)
+{
+  //testSegment(420053);
+  testSegment(1);
 }
