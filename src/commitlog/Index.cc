@@ -94,7 +94,9 @@ namespace CommitLog
     boost::lock_guard<boost::shared_mutex> lock(mutex_);
 
     if (position_ >= size_)
-      return Utils::err(mykafka::Error::INDEX_ERROR, "Write overflow!");
+      return Utils::err(mykafka::Error::INDEX_ERROR, "Write overflow!"
+                        " (" + std::to_string(position_) + " >= " +
+                        std::to_string(size_) + ")");
 
     *reinterpret_cast<int32_t*>(static_cast<char*>(addr_) + position_) = rel_offset;
     position_ += OFFSET_WIDTH;
@@ -109,7 +111,7 @@ namespace CommitLog
   {
     boost::shared_lock<boost::shared_mutex> lock(mutex_);
     if (offset > size_ - ENTRY_WIDTH)
-      return Utils::err(mykafka::Error::INDEX_ERROR, "Write overflow!");
+      return Utils::err(mykafka::Error::INDEX_ERROR, "Read overflow!");
 
     rel_offset = *reinterpret_cast<int32_t*>(static_cast<char*>(addr_) + offset) + base_offset_;
     rel_position = *reinterpret_cast<int32_t*>(static_cast<char*>(addr_) + offset + OFFSET_WIDTH);

@@ -9,8 +9,37 @@
 
 namespace CommitLog
 {
+  /*!
+  ** @class Segment
+  **
+  ** A segment contains a log file and its index file.
+  ** @see Index for index internal structure.
+  **
+  ** Log file has this structure:
+  **
+  ** 8 byte offset
+  ** 4 byte size of payload
+  ** N byte for payload
+  **
+  ** So a message size is: 12 (header length) + N
+  **
+  ** 4 byte CRC32 of the message
+  ** 1 byte "magic" identifier which is always 0.
+  ** 1 byte "attributes" which is always 0.
+  ** 4 byte key length, containing length K
+  ** K byte key
+  ** 4 byte payload length, containing length V
+  ** V byte payload
+  **
+  ** Size is: 4 + 1 + 1 + 4 + K + 4 + V = K + V + 14
+  */
   class Segment
   {
+  public:
+    static const int64_t OFFSET_SIZE = 8;
+    static const int64_t SIZE_SIZE = 4;
+    static const int64_t HEADER_SIZE = OFFSET_SIZE + SIZE_SIZE;
+
   public:
     /*!
     ** Initialise a new segment.
@@ -37,6 +66,36 @@ namespace CommitLog
     mykafka::Error create();
 
     /*!
+    ** Reconstruct index from its log.
+    ** Ensure index and log are synced. Get the last offset.
+    **
+    ** @return Error code 0 if no error, or a detailed error.
+    */
+    mykafka::Error reconstructIndexAndGetLastOffset();
+
+    /*!
+    ** Write at the end of the segment, the given payload.
+    ** Will update the index as well.
+    **
+    ** @param payload The payload to append.
+    ** @param payload_size The payload size.
+    **
+    ** @return Error code 0 if no error, or a detailed error.
+    */
+    mykafka::Error write(const char* payload, int32_t payload_size);
+    mykafka::Error write(const std::string& payload);
+
+    /*!
+    ** Read segment at the specified.
+    **
+    ** @param payload The payload to append.
+    ** @param offset The offset to read.
+    **
+    ** @return Error code 0 if no error, or a detailed error.
+    */
+    mykafka::Error readAt(std::string& payload, int64_t offset);
+
+    /*!
     ** Check if segment is full
     **
     ** @return Segment is full.
@@ -59,6 +118,7 @@ namespace CommitLog
 
     /*!
     ** Try to find an entry at a given offset.
+    ** If not offset is found, then rel_offset value will be -1
     **
     ** @param rel_offset The offset of the entry.
     ** @param rel_position The position of the entry.
@@ -66,11 +126,27 @@ namespace CommitLog
     **
     ** @return Error code 0 if no error, or a detailed error.
     */
-    mykafka::Error findEntry(int64_t& rel_offset, int64_t& rel_position, int64_t search_offset) const;
+    mykafka::Error findEntry(int64_t& rel_offset, int64_t& rel_position,
+                             int64_t search_offset) const;
+
+    /*!
+    ** Get the file descriptor.
+    **
+    ** @return The file descriptor.
+    */
+    int segmentFd() const;
+
+    /*!
+    ** Get the file descriptor.
+    **
+    ** @return The file descriptor.
+    */
+    int indexFd() const;
 
   private:
     Index index_;
     int fd_;
+    int fd_read_;
     int64_t next_offset_;
     int64_t position_;
     const int64_t max_size_;

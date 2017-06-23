@@ -120,14 +120,14 @@ namespace CommitLog
     /*!
     ** Get the file descriptor.
     **
-    ** @return The file name.
+    ** @return The file descriptor.
     */
     int fd() const;
 
     /*!
     ** Get the max size of the index.
     **
-    ** @return 
+    ** @return The max size.
     */
     int64_t maxSize() const;
 

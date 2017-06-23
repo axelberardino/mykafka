@@ -22,10 +22,14 @@ BOOST_AUTO_TEST_CASE(test_index)
   const int64_t total_entries = 10;
   const int64_t size = total_entries * CommitLog::Index::ENTRY_WIDTH;
   CommitLog::Index index(tmp_file, size, 0);
-  auto res = index.deleteIndex();
-  BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
 
-  res = index.create();
+  if (fileExists(tmp_file))
+  {
+    auto res = index.deleteIndex();
+    BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
+  }
+
+  auto res = index.create();
   BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
 
   struct stat buf;

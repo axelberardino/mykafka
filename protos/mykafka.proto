@@ -11,6 +11,7 @@ message Error
     FILE_NOT_FOUND = 2;
     FILE_ERROR = 3;
     INDEX_ERROR = 4;
+    LOG_ERROR = 5;
   }
   ErrCode code = 1;
   string msg = 2;

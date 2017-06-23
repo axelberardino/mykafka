@@ -60,7 +60,12 @@ $(TEST_PATH)/index-test: $(SOURCES) $(OBJ) $(SRC_PATH)/commitlog/Index_Test.o
 index-test: check-test $(TEST_PATH)/index-test
 	$(TEST_PATH)/$@ --log_level=test_suite
 
-test: index-test
+$(TEST_PATH)/segment-test: $(SOURCES) $(OBJ) $(SRC_PATH)/commitlog/Segment_Test.o
+	$(CXX) $(OBJ) $(SRC_PATH)/commitlog/Segment_Test.o $(LDFLAGS) -lboost_unit_test_framework -o $@
+segment-test: check-test $(TEST_PATH)/segment-test
+	$(TEST_PATH)/$@ --log_level=test_suite
+
+test: index-test segment-test
 
 clean:
 	rm -f Makefile.deps $(PROTOS_PATH)/*.cc $(PROTOS_PATH)/*.h
