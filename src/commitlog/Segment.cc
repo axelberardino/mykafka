@@ -27,7 +27,7 @@ namespace CommitLog
   } // namespace
 
   Segment::Segment(const std::string& filename, int64_t base_offset, int64_t max_size)
-    : index_(getIndexFilename(filename, base_offset), 0, base_offset),
+    : index_(getIndexFilename(filename, base_offset), base_offset, 0 /* use default size */),
       fd_(-1), next_offset_(base_offset), position_(0), max_size_(max_size),
       filename_(getLogFilename(filename, base_offset)), mutex_()
   {
@@ -120,9 +120,6 @@ namespace CommitLog
       auto res = index_.write(next_offset_, position_);
       if (res.code() != mykafka::Error::OK)
         return res;
-
-      std::cout << "my_pos: " << position_ << ", next_offset: "
-                << next_offset_ << std::endl;
 
       position_ = size + HEADER_SIZE;
       ++next_offset_;
@@ -237,13 +234,14 @@ namespace CommitLog
   Segment::findEntry(int64_t& rel_offset, int64_t& rel_position, int64_t search_offset) const
   {
     int64_t begin = 0;
-    int64_t end = next_offset_ - 1;
+    int64_t end = (next_offset_ - index_.baseOffset()) - 1;
     int64_t pos = (begin + end) / 2;
     rel_offset = -1;
 
     while (begin <= end && rel_offset != search_offset)
     {
       auto res = index_.read(rel_offset, rel_position, pos * CommitLog::Index::ENTRY_WIDTH);
+      rel_offset -= index_.baseOffset();
       if (res.code() != mykafka::Error::OK)
         return res;
       if (rel_offset > search_offset)
@@ -281,7 +279,7 @@ namespace CommitLog
 
     int64_t rel_offset = -1;
     int64_t rel_position = -1;
-    for (int64_t offset = 0; offset < next_offset_; ++offset)
+    for (int64_t offset = 0; offset < (next_offset_ - index_.baseOffset()); ++offset)
     {
       auto res = index_.read(rel_offset, rel_position, offset * CommitLog::Index::ENTRY_WIDTH);
       if (res.code() != mykafka::Error::OK)

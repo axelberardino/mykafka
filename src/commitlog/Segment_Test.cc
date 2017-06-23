@@ -101,13 +101,23 @@ namespace
   }
 } // namespace
 
-BOOST_AUTO_TEST_CASE(test_segment)
+
+BOOST_AUTO_TEST_CASE(test_segment_offset_0)
 {
   testSegment(0);
 }
 
-BOOST_AUTO_TEST_CASE(test_segment_with_base_offset)
+BOOST_AUTO_TEST_CASE(test_segment_offset_1)
 {
-  //testSegment(420053);
   testSegment(1);
+}
+
+BOOST_AUTO_TEST_CASE(test_segment_offset_1024)
+{
+  testSegment(1024);
+}
+
+BOOST_AUTO_TEST_CASE(test_segment_big_offset)
+{
+  testSegment(520053);
 }

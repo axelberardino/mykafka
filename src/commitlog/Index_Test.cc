@@ -88,12 +88,22 @@ namespace
   }
 } // namespace
 
-BOOST_AUTO_TEST_CASE(test_index)
+BOOST_AUTO_TEST_CASE(test_index_offset_0)
 {
   testIndex(0);
 }
 
-BOOST_AUTO_TEST_CASE(test_index_with_base_offset)
+BOOST_AUTO_TEST_CASE(test_index_offset_1)
+{
+  testIndex(1);
+}
+
+BOOST_AUTO_TEST_CASE(test_index_offset_1024)
+{
+  testIndex(1024);
+}
+
+BOOST_AUTO_TEST_CASE(test_index_big_offset)
 {
   testIndex(420077);
 }
