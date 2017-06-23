@@ -23,13 +23,13 @@ namespace CommitLog
   }
 
   mykafka::Error
-  Index::create()
+  Index::open()
   {
     mykafka::Error err;
     if (filename_.empty())
       return Utils::err(mykafka::Error::INVALID_FILENAME, "Empty index filename given!");
 
-    fd_ = open(filename_.c_str(), O_RDWR | O_CREAT, 0666);
+    fd_ = ::open(filename_.c_str(), O_RDWR | O_CREAT, 0666);
     if (fd_ < 0)
       return Utils::err(mykafka::Error::FILE_ERROR, "Can't open index " + filename_ + "!");
 

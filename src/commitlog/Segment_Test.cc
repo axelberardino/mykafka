@@ -53,7 +53,7 @@ namespace
     CommitLog::Segment segment(tmp_path, base_offset, size);
     segment.deleteSegment();
 
-    auto res = segment.create();
+    auto res = segment.open();
     BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
 
     for (auto& payload : payloads)

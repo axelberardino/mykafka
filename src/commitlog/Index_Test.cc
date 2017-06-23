@@ -31,7 +31,7 @@ namespace
       BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
     }
 
-    auto res = index.create();
+    auto res = index.open();
     BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
 
     struct stat buf;

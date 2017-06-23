@@ -50,14 +50,14 @@ namespace CommitLog
     ~Index();
 
     /*!
-    ** Create a new index.
+    ** Open existing index or create a new one.
     **
     ** Open a new file (or an existing one).
     ** Resize it to a defined size before mmap'ing it.
     **
     ** @return Error code 0 if no error, or a detailed error.
     */
-    mykafka::Error create();
+    mykafka::Error open();
 
     /*!
     ** Write a new entry into the index.

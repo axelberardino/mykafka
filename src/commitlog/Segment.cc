@@ -41,9 +41,9 @@ namespace CommitLog
   }
 
   mykafka::Error
-  Segment::create()
+  Segment::open()
   {
-    auto res = index_.create();
+    auto res = index_.open();
     if (res.code() != mykafka::Error::OK)
       return res;
 

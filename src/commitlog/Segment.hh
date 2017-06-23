@@ -46,14 +46,14 @@ namespace CommitLog
     ~Segment();
 
     /*!
-    ** Create a new segment.
+    ** Open existing segment or create a new one.
     **
     ** Create internal index file.
     ** Create a log file.
     **
     ** @return Error code 0 if no error, or a detailed error.
     */
-    mykafka::Error create();
+    mykafka::Error open();
 
     /*!
     ** Reconstruct index from its log.
