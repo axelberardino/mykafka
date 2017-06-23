@@ -22,16 +22,6 @@ namespace CommitLog
   ** N byte for payload
   **
   ** So a message size is: 12 (header length) + N
-  **
-  ** 4 byte CRC32 of the message
-  ** 1 byte "magic" identifier which is always 0.
-  ** 1 byte "attributes" which is always 0.
-  ** 4 byte key length, containing length K
-  ** K byte key
-  ** 4 byte payload length, containing length V
-  ** V byte payload
-  **
-  ** Size is: 4 + 1 + 1 + 4 + K + 4 + V = K + V + 14
   */
   class Segment
   {

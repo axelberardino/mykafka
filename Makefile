@@ -17,6 +17,7 @@ PROTOS = $(PROTOS_PATH)/mykafka.proto
 SOURCES = \
 	$(SRC_PATH)/commitlog/Index.cc \
 	$(SRC_PATH)/commitlog/Segment.cc \
+	$(SRC_PATH)/commitlog/Partition.cc \
 	$(SRC_PATH)/commitlog/Utils.cc
 HEADERS = $(SOURCES:.cc=.hh)
 
