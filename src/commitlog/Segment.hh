@@ -150,13 +150,13 @@ namespace CommitLog
     } __attribute__((packed));
 
   private:
-    Index index_;
     int fd_;
     int fd_read_;
     int64_t next_offset_;
     int64_t position_;
     const int64_t max_size_;
     std::string filename_;
+    Index index_;
     mutable boost::mutex mutex_;
   };
 } // CommitLog

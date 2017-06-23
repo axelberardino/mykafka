@@ -27,8 +27,15 @@ namespace CommitLog
     Partition();
     ~Partition();
 
-  private:
+    // FIXME add clean
 
+  private:
+    int64_t max_segment_size_;
+    int64_t max_partition_size_;
+    Segment* active_segment_;
+    std::string path_;
+    std::string name_;
+    std::list<Segment*> segments_;
   };
 } // CommitLog
 

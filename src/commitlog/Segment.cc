@@ -27,9 +27,10 @@ namespace CommitLog
   } // namespace
 
   Segment::Segment(const std::string& filename, int64_t base_offset, int64_t max_size)
-    : index_(getIndexFilename(filename, base_offset), base_offset, 0 /* use default size */),
-      fd_(-1), next_offset_(base_offset), position_(0), max_size_(max_size),
-      filename_(getLogFilename(filename, base_offset)), mutex_()
+    : fd_(-1), next_offset_(base_offset), position_(0), max_size_(max_size),
+      filename_(getLogFilename(filename, base_offset)),
+      index_(getIndexFilename(filename, base_offset), base_offset, 0 /* use default size */),
+      mutex_()
   {
     assert(sizeof (Entry) == HEADER_SIZE);
   }
