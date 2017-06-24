@@ -12,6 +12,7 @@ message Error
     FILE_ERROR = 3;
     INDEX_ERROR = 4;
     LOG_ERROR = 5;
+    PARTITION_ERROR = 6;
   }
   ErrCode code = 1;
   string msg = 2;

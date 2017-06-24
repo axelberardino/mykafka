@@ -69,11 +69,12 @@ namespace CommitLog
     **
     ** @param payload The payload to append.
     ** @param payload_size The payload size.
+    ** @param offset The offset where the data has been written.
     **
     ** @return Error code 0 if no error, or a detailed error.
     */
-    mykafka::Error write(const char* payload, int32_t payload_size);
-    mykafka::Error write(const std::string& payload);
+    mykafka::Error write(const char* payload, int32_t payload_size, int64_t& offset);
+    mykafka::Error write(const std::string& payload, int64_t& offset);
 
     /*!
     ** Read segment at the specified.
@@ -108,7 +109,7 @@ namespace CommitLog
 
     /*!
     ** Try to find an entry at a given offset (using a binary search).
-    ** If not offset is found, then rel_offset value will be -1.
+    ** If no offset is found, then rel_offset value will be -1.
     **
     ** @param rel_offset The offset of the entry.
     ** @param rel_position The position of the entry.

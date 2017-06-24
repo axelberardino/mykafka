@@ -67,7 +67,12 @@ $(TEST_PATH)/segment-test: $(SOURCES) $(OBJ) $(SRC_PATH)/commitlog/Segment_Test.
 segment-test: check-test $(TEST_PATH)/segment-test
 	$(TEST_PATH)/$@ --log_level=test_suite
 
-test: index-test segment-test
+$(TEST_PATH)/partition-test: $(SOURCES) $(OBJ) $(SRC_PATH)/commitlog/Partition_Test.o
+	$(CXX) $(OBJ) $(SRC_PATH)/commitlog/Partition_Test.o $(LDFLAGS) -lboost_unit_test_framework -o $@
+partition-test: check-test $(TEST_PATH)/partition-test
+	$(TEST_PATH)/$@ --log_level=test_suite
+
+test: index-test segment-test partition-test
 
 clean:
 	rm -f Makefile.deps $(PROTOS_PATH)/*.cc $(PROTOS_PATH)/*.h

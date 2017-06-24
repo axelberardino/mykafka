@@ -133,7 +133,7 @@ namespace CommitLog
   }
 
   mykafka::Error
-  Segment::write(const char* payload, int32_t payload_size)
+  Segment::write(const char* payload, int32_t payload_size, int64_t& offset)
   {
     boost::lock_guard<boost::mutex> lock(mutex_);
 
@@ -149,6 +149,7 @@ namespace CommitLog
     if (res.code() != mykafka::Error::OK)
       return res;
 
+    offset = next_offset_;
     ++next_offset_;
     position_ += HEADER_SIZE + payload_size;
 
@@ -156,9 +157,9 @@ namespace CommitLog
   }
 
   mykafka::Error
-  Segment::write(const std::string& payload)
+  Segment::write(const std::string& payload, int64_t& offset)
   {
-    return write(payload.data(), payload.size());
+    return write(payload.data(), payload.size(), offset);
   }
 
   mykafka::Error

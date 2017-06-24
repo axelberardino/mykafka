@@ -58,7 +58,8 @@ namespace
 
     for (auto& payload : payloads)
     {
-      res = segment.write(payload);
+      int64_t written_offset = 0;
+      res = segment.write(payload, written_offset);
       BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
     }
 

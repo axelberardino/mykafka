@@ -86,17 +86,47 @@ namespace CommitLog
   mykafka::Error
   Partition::write(const std::string& payload, int64_t& offset)
   {
+    assert(active_segment_);
+    if ((*active_segment_).isFull())
+    {
+      boost::lock_guard<boost::shared_mutex> lock(mutex_);
+
+      Segment* segment = new Segment(path_, newestOffset(), max_segment_size_);
+      auto res = segment->open();
+      if (res.code() != mykafka::Error::OK)
+      {
+        delete segment;
+        return res;
+      }
+      segments_.push_back(segment);
+      cleanOldSegments();
+      active_segment_ = segments_.back();
+    }
+
+    auto res = (*active_segment_).write(payload, offset);
+    if (res.code() != mykafka::Error::OK)
+      return res;
+
     return Utils::err(mykafka::Error::OK);
   }
 
   mykafka::Error
-  Partition::read(std::vector<char>& payload)
+  Partition::readAt(std::vector<char>& payload, int64_t offset)
   {
-    return Utils::err(mykafka::Error::OK);
-  }
+    boost::shared_lock<boost::shared_mutex> lock(mutex_);
 
-  mykafka::Error readAt(std::vector<char>& payload, int64_t offset)
-  {
+    Segment* found_segment = 0;
+    auto res = findSegment(found_segment, offset);
+    if (res.code() != mykafka::Error::OK)
+      return res;
+    if (!found_segment)
+      return Utils::err(mykafka::Error::PARTITION_ERROR, "Can't find "
+                        "segment for offset " + std::to_string(offset));
+
+    res = found_segment->readAt(payload, offset - found_segment->baseOffset());
+    if (res.code() != mykafka::Error::OK)
+      return res;
+
     return Utils::err(mykafka::Error::OK);
   }
 
@@ -153,6 +183,34 @@ namespace CommitLog
   mykafka::Error
   Partition::cleanOldSegments()
   {
+    return Utils::err(mykafka::Error::OK);
+  }
+
+  mykafka::Error
+  Partition::findSegment(Segment*& found_segment, int64_t search_offset)
+  {
+    found_segment = 0;
+    if (segments_.empty())
+      return Utils::err(mykafka::Error::OK);
+
+    int64_t begin = 0;
+    int64_t end = segments_.size() - 1;
+    int64_t pos = (begin + end) / 2;
+    int64_t found_offset = -1;
+
+    while (begin <= end && found_offset != search_offset)
+    {
+      found_offset = segments_[pos]->baseOffset();
+      if (found_offset > search_offset)
+        end = pos - 1;
+      else
+      {
+        found_segment = segments_[pos];
+        begin = pos + 1;
+      }
+      pos = (begin + end) / 2;
+    }
+
     return Utils::err(mykafka::Error::OK);
   }
 } // CommitLog

@@ -5,7 +5,7 @@
 # include "mykafka.pb.h"
 
 # include <boost/thread/shared_mutex.hpp>
-# include <list>
+# include <vector>
 # include <atomic>
 
 namespace CommitLog
@@ -49,8 +49,25 @@ namespace CommitLog
     */
     mykafka::Error open();
 
+    /*!
+    ** Write payload into the right segments.
+    ** If a new segment is created, also clean old segments.
+    **
+    ** @param payload Data to write.
+    ** @param offset Where the data has been written.
+    **
+    ** @return Error code 0 if no error, or a detailed error.
+    */
     mykafka::Error write(const std::string& payload, int64_t& offset);
-    mykafka::Error read(std::vector<char>& payload);
+
+    /*!
+    ** Find the right segment, and then read data from it, at the right position.
+    **
+    ** @param payload Data to write.
+    ** @param offset Where the data has been written.
+    **
+    ** @return Error code 0 if no error, or a detailed error.
+    */
     mykafka::Error readAt(std::vector<char>& payload, int64_t offset);
 
     /*!
@@ -87,12 +104,24 @@ namespace CommitLog
     mykafka::Error cleanOldSegments();
 
   private:
+    /*!
+    ** Search for a segment containing offset.
+    ** Try to find the closest segment where search_offset can be.
+    **
+    ** @param found_segment The founded_segment or 0 if not found.
+    ** @param search_offset The offset.
+    **
+    ** @return Error code 0 if no error, or a detailed error.
+    */
+    mykafka::Error findSegment(Segment*& found_segment, int64_t search_offset);
+
+  private:
     int64_t max_segment_size_;
     int64_t max_partition_size_;
     std::atomic<Segment*> active_segment_;
     std::string path_;
     std::string name_;
-    std::list<Segment*> segments_;
+    std::vector<Segment*> segments_;
     mutable boost::shared_mutex mutex_;
   };
 } // CommitLog
