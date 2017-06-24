@@ -38,16 +38,14 @@ namespace
       BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
       BOOST_CHECK(offset != -1);
       BOOST_CHECK_EQUAL(base_offset + i, offset);
-      //std::cout << "of: " << base_offset << " + " << i << " = "<< offset << std::endl;
     }
 
-    if (!read) // FIXME delete me
+    if (read)
     {
       base_offset = partition.oldestOffset();
       std::vector<char> payload;
       for (int64_t i = 0; i < nb_payload; ++i)
       {
-        //std::cout << "read: " << base_offset << " + " << i << " = " << base_offset + i << std::endl;
         res = partition.readAt(payload, base_offset + i);
         BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
         const std::string str_payload(payload.begin(), payload.end());
@@ -118,4 +116,67 @@ BOOST_AUTO_TEST_CASE(test_partition_new_segment_reopen)
   writeAndReadPartition("/test-newseg", 30,
                         (little_payload.size() + CommitLog::Segment::HEADER_SIZE) * 10,
                         big_partition_size, false);
+}
+
+// ============================
+
+BOOST_AUTO_TEST_CASE(test_partition_one_segment_with_reread)
+{
+  writeAndReadPartition("/test-1seg", 5,
+                        (little_payload.size() + CommitLog::Segment::HEADER_SIZE) * 10,
+                        big_partition_size, true);
+}
+
+BOOST_AUTO_TEST_CASE(test_partition_1_segment_10kmsg_with_reread)
+{
+  writeAndReadPartition("/test-1seg10k", 10000,
+                        (little_payload.size() + CommitLog::Segment::HEADER_SIZE) * 10000,
+                        big_partition_size, true);
+}
+
+BOOST_AUTO_TEST_CASE(test_partition_two_segment_with_reread)
+{
+  writeAndReadPartition("/test-2seg", 15,
+                        (little_payload.size() + CommitLog::Segment::HEADER_SIZE) * 10,
+                        big_partition_size, true);
+}
+
+BOOST_AUTO_TEST_CASE(test_partition_ten_segment_with_reread)
+{
+  writeAndReadPartition("/test-10seg", 100,
+                        (little_payload.size() + CommitLog::Segment::HEADER_SIZE) * 10,
+                        big_partition_size, true);
+}
+
+// BOOST_AUTO_TEST_CASE(test_partition_thousand_segment_with_reread)
+// {
+//   writeAndReadPartition("/test-1000seg", 10000,
+//                         (little_payload.size() + CommitLog::Segment::HEADER_SIZE) * 10,
+//                         big_partition_size, true);
+// }
+
+BOOST_AUTO_TEST_CASE(test_partition_one_segment_reopen_with_reread)
+{
+  writeAndReadPartition("/test-1reopenseg", 2,
+                        (little_payload.size() + CommitLog::Segment::HEADER_SIZE) * 10,
+                        big_partition_size, true);
+  writeAndReadPartition("/test-1reopenseg", 2,
+                        (little_payload.size() + CommitLog::Segment::HEADER_SIZE) * 10,
+                        big_partition_size, true);
+}
+
+BOOST_AUTO_TEST_CASE(test_partition_new_segment_reopen_with_reread)
+{
+  writeAndReadPartition("/test-newseg", 20,
+                        (little_payload.size() + CommitLog::Segment::HEADER_SIZE) * 10,
+                        big_partition_size, true);
+  writeAndReadPartition("/test-newseg", 1,
+                        (little_payload.size() + CommitLog::Segment::HEADER_SIZE) * 10,
+                        big_partition_size, true);
+  writeAndReadPartition("/test-newseg", 15,
+                        (little_payload.size() + CommitLog::Segment::HEADER_SIZE) * 10,
+                        big_partition_size, true);
+  writeAndReadPartition("/test-newseg", 30,
+                        (little_payload.size() + CommitLog::Segment::HEADER_SIZE) * 10,
+                        big_partition_size, true);
 }
