@@ -95,10 +95,9 @@ namespace CommitLog
       return Utils::err(mykafka::Error::LOG_ERROR, "Can't seek"
                         " at start of log " + filename_ + "!");
 
-    char buffer[16] = {0};
     while (true)
     {
-      auto bytes = ::read(fd_, buffer, OFFSET_SIZE);
+      auto bytes = ::read(fd_, &next_offset_, OFFSET_SIZE);
       if (bytes < 0)
         return Utils::err(mykafka::Error::LOG_ERROR, "Can't read offset"
                           " from log " + filename_ + "!");
@@ -106,23 +105,17 @@ namespace CommitLog
       if (bytes == 0)
         break;
 
-      next_offset_ = strtoll(buffer, 0, 10);
-
-      bytes = ::read(fd_, buffer, SIZE_SIZE);
-      if (bytes < 0)
+      int32_t size = -1;
+      bytes = ::read(fd_, &size, SIZE_SIZE);
+      if (bytes <= 0)
         return Utils::err(mykafka::Error::LOG_ERROR, "Can't read size"
                           " from log " + filename_ + "!");
-      // End of file
-      if (bytes == 0)
-        break;
-
-      const int32_t size = strtoll(buffer, 0, 10);
 
       auto res = index_.write(next_offset_, position_);
       if (res.code() != mykafka::Error::OK)
         return res;
 
-      position_ = size + HEADER_SIZE;
+      position_ += size + HEADER_SIZE;
       ++next_offset_;
 
       if (::lseek(fd_, size, SEEK_CUR) < 0)
@@ -217,6 +210,7 @@ namespace CommitLog
 
     fd_ = -1;
     fd_read_ = -1;
+    position_ = 0;
     return index_.close();
   }
 
