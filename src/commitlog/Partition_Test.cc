@@ -26,6 +26,8 @@ namespace
   void writeAndReadPartition(const std::string& suffix, int64_t nb_payload,
                              int64_t max_segment_size, int64_t max_partition_size, bool read)
   {
+    const std::vector<char> v_payload(little_payload.begin(), little_payload.end());
+
     CommitLog::Partition partition(tmp_path + suffix, max_segment_size, max_partition_size);
     auto res = partition.open();
     BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
@@ -34,7 +36,7 @@ namespace
     for (int64_t i = 0; i < nb_payload; ++i)
     {
       int64_t offset = -1;
-      res = partition.write(little_payload, offset);
+      res = partition.write(v_payload, offset);
       BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
       BOOST_CHECK(offset != -1);
       BOOST_CHECK_EQUAL(base_offset + i, offset);

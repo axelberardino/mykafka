@@ -74,7 +74,7 @@ namespace CommitLog
     ** @return Error code 0 if no error, or a detailed error.
     */
     mykafka::Error write(const char* payload, int32_t payload_size, int64_t& offset);
-    mykafka::Error write(const std::string& payload, int64_t& offset);
+    mykafka::Error write(const std::vector<char>& payload, int64_t& offset);
 
     /*!
     ** Read segment at the specified.

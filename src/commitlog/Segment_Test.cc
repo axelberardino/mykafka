@@ -49,7 +49,8 @@ namespace
     for (auto& payload : payloads)
     {
       int64_t written_offset = 0;
-      res = segment.write(payload, written_offset);
+      const std::vector<char> v_payload(payload.begin(), payload.end());
+      res = segment.write(v_payload, written_offset);
       BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
     }
 

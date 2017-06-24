@@ -93,7 +93,7 @@ namespace CommitLog
   }
 
   mykafka::Error
-  Partition::write(const std::string& payload, int64_t& offset)
+  Partition::write(const std::vector<char>& payload, int64_t& offset)
   {
     assert(active_segment_);
     if ((*active_segment_).isFull())

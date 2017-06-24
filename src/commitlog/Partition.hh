@@ -58,7 +58,7 @@ namespace CommitLog
     **
     ** @return Error code 0 if no error, or a detailed error.
     */
-    mykafka::Error write(const std::string& payload, int64_t& offset);
+    mykafka::Error write(const std::vector<char>& payload, int64_t& offset);
 
     /*!
     ** Find the right segment, and then read data from it, at the right position.

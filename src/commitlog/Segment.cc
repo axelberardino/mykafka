@@ -150,9 +150,9 @@ namespace CommitLog
   }
 
   mykafka::Error
-  Segment::write(const std::string& payload, int64_t& offset)
+  Segment::write(const std::vector<char>& payload, int64_t& offset)
   {
-    return write(payload.data(), payload.size(), offset);
+    return write(&payload[0], payload.size(), offset);
   }
 
   mykafka::Error
