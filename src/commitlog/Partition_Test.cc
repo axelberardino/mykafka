@@ -109,6 +109,9 @@ BOOST_AUTO_TEST_CASE(test_partition_new_segment_reopen)
   writeAndReadPartition("/test-newseg", 20,
                         (little_payload.size() + CommitLog::Segment::HEADER_SIZE) * 10,
                         big_partition_size, false);
+  writeAndReadPartition("/test-newseg", 1,
+                        (little_payload.size() + CommitLog::Segment::HEADER_SIZE) * 10,
+                        big_partition_size, false);
   writeAndReadPartition("/test-newseg", 15,
                         (little_payload.size() + CommitLog::Segment::HEADER_SIZE) * 10,
                         big_partition_size, false);

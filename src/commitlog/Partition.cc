@@ -7,6 +7,8 @@
 
 namespace CommitLog
 {
+  namespace fs = boost::filesystem;
+
   namespace
   {
     int64_t detectBaseOffset(const std::string& s)
@@ -15,6 +17,20 @@ namespace CommitLog
       if (res == 0 && s.find_first_not_of("0") != std::string::npos)
         return -1;
       return res;
+    }
+
+    void fillFilesList(const fs::path& raw_path, std::vector<int64_t>& offset_list)
+    {
+      for (auto& entry : boost::make_iterator_range(fs::directory_iterator(raw_path), {}))
+      {
+        if (fs::is_regular(entry) && entry.path().extension().string() == ".log")
+        {
+          const int64_t base_offset = detectBaseOffset(entry.path().stem().string());
+          if (base_offset >= 0)
+            offset_list.push_back(base_offset);
+        }
+      }
+      std::sort(offset_list.begin(), offset_list.end());
     }
   } // namespace
 
@@ -32,8 +48,6 @@ namespace CommitLog
   mykafka::Error
   Partition::open()
   {
-    namespace fs = boost::filesystem;
-
     fs::path raw_path(path_);
     try
     {
@@ -42,23 +56,18 @@ namespace CommitLog
       name_ = raw_path.filename().string();
 
       fs::create_directories(raw_path);
-      for (auto& entry : boost::make_iterator_range(fs::directory_iterator(raw_path), {}))
+      std::vector<int64_t> offset_list;
+      fillFilesList(raw_path, offset_list);
+      for (auto base_offset : offset_list)
       {
-        if (entry.path().extension().string() == "log")
+        Segment* segment = new Segment(path_, base_offset, max_segment_size_);
+        auto res = segment->open();
+        if (res.code() != mykafka::Error::OK)
         {
-          int64_t base_offset = detectBaseOffset(entry.path().stem().string());
-          if (base_offset < 0)
-          {
-            Segment* segment = new Segment(path_, base_offset, max_segment_size_);
-            auto res = segment->open();
-            if (res.code() != mykafka::Error::OK)
-            {
-              delete segment;
-              return res;
-            }
-            segments_.push_back(segment);
-          }
+          delete segment;
+          return res;
         }
+        segments_.push_back(segment);
       }
 
       if (segments_.empty())
