@@ -29,8 +29,7 @@ namespace CommitLog
   Segment::Segment(const std::string& filename, int64_t base_offset, int64_t max_size)
     : fd_(-1), next_offset_(base_offset), position_(0), max_size_(max_size),
       filename_(getLogFilename(filename, base_offset)),
-      index_(getIndexFilename(filename, base_offset), base_offset, 0 /* use default size */),
-      mutex_()
+      index_(getIndexFilename(filename, base_offset), base_offset, 0 /* use default size */)
   {
     assert(sizeof (Entry) == HEADER_SIZE);
   }
@@ -128,8 +127,6 @@ namespace CommitLog
   mykafka::Error
   Segment::write(const char* payload, int32_t payload_size, int64_t& offset)
   {
-    boost::lock_guard<boost::mutex> lock(mutex_);
-
     const Entry entry{next_offset_, payload_size};
     if (::write(fd_, &entry, HEADER_SIZE) != HEADER_SIZE)
       return Utils::err(mykafka::Error::LOG_ERROR, "Can't write payload"
@@ -158,8 +155,6 @@ namespace CommitLog
   mykafka::Error
   Segment::readAt(std::vector<char>& payload, int64_t relative_offset)
   {
-    boost::lock_guard<boost::mutex> lock(mutex_);
-
     int64_t rel_offset = -1;
     int64_t rel_position = -1;
     auto res = findEntry(rel_offset, rel_position, relative_offset);
@@ -193,14 +188,12 @@ namespace CommitLog
   bool
   Segment::isFull() const
   {
-    boost::lock_guard<boost::mutex> lock(mutex_);
     return position_ > max_size_;
   }
 
   mykafka::Error
   Segment::close()
   {
-    boost::lock_guard<boost::mutex> lock(mutex_);
     if (::close(fd_) < 0)
       return Utils::err(mykafka::Error::FILE_ERROR,
                         "Can't close log file " + filename_ + "!");
@@ -218,7 +211,6 @@ namespace CommitLog
   Segment::deleteSegment()
   {
     close();
-    boost::lock_guard<boost::mutex> lock(mutex_);
     if (::unlink(filename_.c_str()) < 0)
       return Utils::err(mykafka::Error::FILE_ERROR,
                         "Can't delete log file " + filename_ + "!");
@@ -283,8 +275,6 @@ namespace CommitLog
   mykafka::Error
   Segment::dump(std::ostream& out) const
   {
-    boost::lock_guard<boost::mutex> lock(mutex_);
-
     int64_t rel_offset = -1;
     int64_t rel_position = -1;
     for (int64_t offset = 0; offset < (next_offset_ - index_.baseOffset()); ++offset)

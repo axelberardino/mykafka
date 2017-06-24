@@ -1,7 +1,6 @@
 #ifndef COMMIT_LOG_SEGMENT_HH_
 # define COMMIT_LOG_SEGMENT_HH_
 
-# include <boost/thread/mutex.hpp>
 # include <vector>
 
 # include "mykafka.pb.h"
@@ -172,7 +171,6 @@ namespace CommitLog
     const int64_t max_size_;
     std::string filename_;
     Index index_;
-    mutable boost::mutex mutex_;
   };
 } // CommitLog
 

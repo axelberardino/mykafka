@@ -5,8 +5,6 @@
 # include <string>
 # include <mutex>
 
-# include <boost/thread/shared_mutex.hpp>
-
 # include "mykafka.pb.h"
 
 namespace CommitLog
@@ -155,7 +153,6 @@ namespace CommitLog
     int fd_;
     void* addr_;
     const std::string filename_;
-    mutable boost::shared_mutex mutex_;
   };
 } // CommitLog
 

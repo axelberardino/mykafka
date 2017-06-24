@@ -95,12 +95,13 @@ namespace CommitLog
   mykafka::Error
   Partition::write(const std::vector<char>& payload, int64_t& offset)
   {
+    boost::lock_guard<boost::shared_mutex> lock(mutex_);
+
     assert(active_segment_);
     if ((*active_segment_).isFull())
     {
-      boost::lock_guard<boost::shared_mutex> lock(mutex_);
-
-      Segment* segment = new Segment(path_, newestOffset(), max_segment_size_);
+      Segment* segment = new Segment(path_, (*active_segment_).nextOffset(),
+                                     max_segment_size_);
       auto res = segment->open();
       if (res.code() != mykafka::Error::OK)
       {
@@ -122,7 +123,7 @@ namespace CommitLog
   mykafka::Error
   Partition::readAt(std::vector<char>& payload, int64_t offset)
   {
-    boost::shared_lock<boost::shared_mutex> lock(mutex_);
+    boost::lock_guard<boost::shared_mutex> lock(mutex_);
 
     Segment* found_segment = 0;
     auto res = findSegment(found_segment, offset);
@@ -142,6 +143,7 @@ namespace CommitLog
   int64_t
   Partition::newestOffset() const
   {
+    boost::shared_lock<boost::shared_mutex> lock(mutex_);
     assert(active_segment_);
     return (*active_segment_).nextOffset();
   }
@@ -156,6 +158,7 @@ namespace CommitLog
   Segment*
   Partition::activeSegment() const
   {
+    boost::shared_lock<boost::shared_mutex> lock(mutex_);
     return active_segment_;
   }
 
