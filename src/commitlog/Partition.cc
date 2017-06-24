@@ -53,8 +53,6 @@ namespace CommitLog
     fs::path raw_path(path_);
     try
     {
-      int64_t size = 0;
-      int64_t ts = 0;
       raw_path = fs::absolute(raw_path);
       path_ = raw_path.string();
       name_ = raw_path.filename().string();
@@ -71,13 +69,7 @@ namespace CommitLog
           delete segment;
           return res;
         }
-        res = segment->statInfo(size, ts);
-        if (res.code() != mykafka::Error::OK)
-        {
-          delete segment;
-          return res;
-        }
-        physical_size_ += size;
+        physical_size_ += segment->size();
         segments_.push_back(segment);
       }
 
@@ -122,7 +114,7 @@ namespace CommitLog
         return res;
       }
       segments_.push_back(segment);
-      cleanOldSegments();
+      cleanOldSegments(); // /!\ If segments are small, could destroy performance...
       active_segment_ = segments_.back();
     }
 
@@ -225,20 +217,17 @@ namespace CommitLog
     segments_.erase(std::remove_if(segments_.begin(), segments_.end(),
                                    [&](Segment* segment)
                                    {
-                                     int64_t size = 0;
-                                     int64_t ts = 0;
-                                     auto local_res = segment->statInfo(size, ts);
-                                     if (local_res.code() != mykafka::Error::OK)
-                                     {
-                                       res = local_res;
+                                     if (segment == active_segment_)
                                        return false;
-                                     }
+
+                                     const int64_t size = segment->size();
+                                     const int64_t ts = segment->mtime();
                                      const bool too_old = seg_ttl != 0 && now - ts > seg_ttl;
                                      const bool partition_too_large = max_size != 0 &&
                                        physical_size_ > max_size;
                                      if (too_old || partition_too_large)
                                      {
-                                       local_res = segment->deleteSegment();
+                                       auto local_res = segment->deleteSegment();
                                        if (local_res.code() != mykafka::Error::OK)
                                        {
                                          res = local_res;

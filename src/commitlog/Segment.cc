@@ -28,8 +28,8 @@ namespace CommitLog
   } // namespace
 
   Segment::Segment(const std::string& filename, int64_t base_offset, int64_t max_size)
-    : fd_(-1), next_offset_(base_offset), position_(0), max_size_(max_size),
-      filename_(getLogFilename(filename, base_offset)),
+    : fd_(-1), fd_read_(-1), next_offset_(base_offset), position_(0), physical_size_(0),
+      mtime_(0), max_size_(max_size), filename_(getLogFilename(filename, base_offset)),
       index_(getIndexFilename(filename, base_offset), base_offset, 0 /* use default size */)
   {
     assert(sizeof (Entry) == HEADER_SIZE);
@@ -59,6 +59,13 @@ namespace CommitLog
     if (fd_ < 0)
       return Utils::err(mykafka::Error::FILE_ERROR, "Can't"
                         " open log " + filename_ + "!");
+
+    struct stat buf;
+    if (::fstat(fd_, &buf) < 0)
+      return Utils::err(mykafka::Error::FILE_ERROR, "Can't"
+                        " stat log " + filename_ + "!");
+    physical_size_ = buf.st_size;
+    mtime_ = buf.st_mtime;
 
     fd_read_ = ::open(filename_.c_str(), O_RDONLY, 0666);
     if (fd_read_ < 0)
@@ -143,6 +150,7 @@ namespace CommitLog
     offset = next_offset_;
     ++next_offset_;
     position_ += HEADER_SIZE + payload_size;
+    physical_size_ += HEADER_SIZE + payload_size;
 
     return Utils::err(mykafka::Error::OK);
   }
@@ -205,6 +213,8 @@ namespace CommitLog
     fd_ = -1;
     fd_read_ = -1;
     position_ = 0;
+    mtime_ = 0;
+    physical_size_ = 0;
     return index_.close();
   }
 
@@ -273,6 +283,18 @@ namespace CommitLog
     return index_.baseOffset();
   }
 
+  int64_t
+  Segment::size() const
+  {
+    return physical_size_;
+  }
+
+  int64_t
+  Segment::mtime() const
+  {
+    return mtime_;
+  }
+
   mykafka::Error
   Segment::dump(std::ostream& out) const
   {
@@ -307,20 +329,6 @@ namespace CommitLog
         out << c;
       out << "\n";
     }
-
-    return Utils::err(mykafka::Error::OK);
-  }
-
-  mykafka::Error
-  Segment::statInfo(int64_t& size, int64_t& mtime) const
-  {
-    struct stat buf;
-    if (::fstat(fd_, &buf) < 0)
-      return Utils::err(mykafka::Error::LOG_ERROR,
-                        "Can't stat segment file " + filename_ + "!");
-
-    size = buf.st_size;
-    mtime = buf.st_mtime;
 
     return Utils::err(mykafka::Error::OK);
   }

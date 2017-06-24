@@ -157,12 +157,18 @@ namespace CommitLog
     mykafka::Error dump(std::ostream& out) const;
 
     /*!
-    ** Get the physical size and the last
-    ** modification time of this segments.
+    ** Get the physical size of this segment.
     **
-    ** @return Error code 0 if no error, or a detailed error.
+    ** @return The physical size.
     */
-    mykafka::Error statInfo(int64_t& size, int64_t& mtime) const;
+    int64_t size() const;
+
+    /*!
+    ** Get the last time the segment file has been modified.
+    **
+    ** @return Last time modified.
+    */
+    int64_t mtime() const;
 
   private:
     struct Entry
@@ -176,6 +182,8 @@ namespace CommitLog
     int fd_read_;
     int64_t next_offset_;
     int64_t position_;
+    int64_t physical_size_;
+    int64_t mtime_;
     const int64_t max_size_;
     std::string filename_;
     Index index_;
