@@ -14,16 +14,26 @@
 
 namespace
 {
+  namespace fs = boost::filesystem;
+
   const int64_t big_partition_size = 0;
   const std::string tmp_path = "/tmp/mykafka-test/partition-test";
   const std::string little_payload = "{my_payload:test, value:carrotandj}";
   const std::vector<char> v_payload(little_payload.begin(), little_payload.end());
+  const int64_t max_segment_size = little_payload.size() + CommitLog::Segment::HEADER_SIZE;
 
   struct Setup
   {
-    Setup() { boost::filesystem::remove_all(tmp_path); }
+    Setup() { fs::remove_all(tmp_path); }
     ~Setup() {}
   };
+
+  int64_t countFiles(const std::string& dir)
+  {
+    return std::count_if(fs::directory_iterator(dir),
+                         fs::directory_iterator(),
+                         static_cast<bool(*)(const fs::path&)>(fs::is_regular_file));
+  }
 
   void writeFrom(CommitLog::Partition& partition, int64_t nb_payload, bool check_offset = true)
   {
@@ -59,11 +69,11 @@ namespace
       readFrom(partition, nb_payload);
   }
 
-  void writeAndReadPartition(const std::string& suffix, int64_t nb_payload,
+  void writeAndReadPartition(const std::string& path, int64_t nb_payload,
                              int64_t max_segment_size, int64_t max_partition_size,
                              bool read, int64_t ttl = 0)
   {
-    CommitLog::Partition partition(tmp_path + suffix, max_segment_size,
+    CommitLog::Partition partition(path, max_segment_size,
                                    max_partition_size, ttl);
     auto res = partition.open();
     BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
@@ -76,133 +86,190 @@ BOOST_GLOBAL_FIXTURE(Setup);
 
 BOOST_AUTO_TEST_CASE(test_partition_one_segment)
 {
-  writeAndReadPartition("/test-1seg", 5,
-                        (little_payload.size() + CommitLog::Segment::HEADER_SIZE) * 10,
+  const std::string dir = tmp_path + "/test-1seg";
+  writeAndReadPartition(dir, 5,
+                        max_segment_size * 10,
                         big_partition_size, false);
+  BOOST_CHECK_EQUAL(countFiles(dir), 1 * 2);
 }
 
 BOOST_AUTO_TEST_CASE(test_partition_1_segment_10kmsg)
 {
-  writeAndReadPartition("/test-1seg10k", 10000,
-                        (little_payload.size() + CommitLog::Segment::HEADER_SIZE) * 10000,
+  const std::string dir = tmp_path + "/test-1seg10k";
+  writeAndReadPartition(dir, 10000,
+                        max_segment_size * 10000,
                         big_partition_size, false);
+  BOOST_CHECK_EQUAL(countFiles(dir), 1 * 2);
 }
 
 BOOST_AUTO_TEST_CASE(test_partition_two_segment)
 {
-  writeAndReadPartition("/test-2seg", 15,
-                        (little_payload.size() + CommitLog::Segment::HEADER_SIZE) * 10,
+  const std::string dir = tmp_path + "/test-2seg";
+  writeAndReadPartition(dir, 15,
+                        max_segment_size * 10,
                         big_partition_size, false);
+  BOOST_CHECK_EQUAL(countFiles(dir), 2 * 2);
 }
 
 BOOST_AUTO_TEST_CASE(test_partition_ten_segment)
 {
-  writeAndReadPartition("/test-10seg", 100,
-                        (little_payload.size() + CommitLog::Segment::HEADER_SIZE) * 10,
+  const std::string dir = tmp_path + "/test-10seg";
+  writeAndReadPartition(dir, 100,
+                        max_segment_size * 10,
                         big_partition_size, false);
+  BOOST_CHECK_EQUAL(countFiles(dir), 10 * 2);
 }
 
-// BOOST_AUTO_TEST_CASE(test_partition_thousand_segment)
-// {
-//   writeAndReadPartition("/test-1000seg", 10000,
-//                         (little_payload.size() + CommitLog::Segment::HEADER_SIZE) * 10,
-//                         big_partition_size, false);
-// }
+BOOST_AUTO_TEST_CASE(test_partition_hundred_segment)
+{
+  const std::string dir = tmp_path + "/test-100seg";
+  writeAndReadPartition(dir, 1100,
+                        max_segment_size * 10,
+                        big_partition_size, false);
+  BOOST_CHECK_EQUAL(countFiles(dir), 100 * 2);
+}
 
 BOOST_AUTO_TEST_CASE(test_partition_one_segment_reopen)
 {
-  writeAndReadPartition("/test-1reopenseg", 2,
-                        (little_payload.size() + CommitLog::Segment::HEADER_SIZE) * 10,
+  const std::string dir = tmp_path + "/test-1reopenseg";
+  writeAndReadPartition(dir, 2,
+                        max_segment_size * 10,
                         big_partition_size, false);
-  writeAndReadPartition("/test-1reopenseg", 2,
-                        (little_payload.size() + CommitLog::Segment::HEADER_SIZE) * 10,
+  writeAndReadPartition(dir, 2,
+                        max_segment_size * 10,
                         big_partition_size, false);
+  BOOST_CHECK_EQUAL(countFiles(dir), 1 * 2);
 }
 
 BOOST_AUTO_TEST_CASE(test_partition_new_segment_reopen)
 {
-  writeAndReadPartition("/test-newseg", 20,
-                        (little_payload.size() + CommitLog::Segment::HEADER_SIZE) * 10,
+  const std::string dir = tmp_path + "/test-newseg";
+  writeAndReadPartition(dir, 20,
+                        max_segment_size * 10,
                         big_partition_size, false);
-  writeAndReadPartition("/test-newseg", 1,
-                        (little_payload.size() + CommitLog::Segment::HEADER_SIZE) * 10,
+  writeAndReadPartition(dir, 1,
+                        max_segment_size * 10,
                         big_partition_size, false);
-  writeAndReadPartition("/test-newseg", 15,
-                        (little_payload.size() + CommitLog::Segment::HEADER_SIZE) * 10,
+  writeAndReadPartition(dir, 15,
+                        max_segment_size * 10,
                         big_partition_size, false);
-  writeAndReadPartition("/test-newseg", 30,
-                        (little_payload.size() + CommitLog::Segment::HEADER_SIZE) * 10,
+  writeAndReadPartition(dir, 30,
+                        max_segment_size * 10,
                         big_partition_size, false);
+  BOOST_CHECK_EQUAL(countFiles(dir), 6 * 2);
 }
 
 // ============================
 
 BOOST_AUTO_TEST_CASE(test_partition_one_segment_with_reread)
 {
-  writeAndReadPartition("/test-1seg", 5,
-                        (little_payload.size() + CommitLog::Segment::HEADER_SIZE) * 10,
+  const std::string dir = tmp_path + "/test-r1seg";
+  writeAndReadPartition(dir, 5,
+                        max_segment_size * 10,
                         big_partition_size, true);
+  BOOST_CHECK_EQUAL(countFiles(dir), 1 * 2);
 }
 
 BOOST_AUTO_TEST_CASE(test_partition_1_segment_10kmsg_with_reread)
 {
-  writeAndReadPartition("/test-1seg10k", 10000,
-                        (little_payload.size() + CommitLog::Segment::HEADER_SIZE) * 10000,
+  const std::string dir = tmp_path + "/test-r1seg10k";
+  writeAndReadPartition(dir, 10000,
+                        max_segment_size * 10000,
                         big_partition_size, true);
+  BOOST_CHECK_EQUAL(countFiles(dir), 1 * 2);
 }
 
 BOOST_AUTO_TEST_CASE(test_partition_two_segment_with_reread)
 {
-  writeAndReadPartition("/test-2seg", 15,
-                        (little_payload.size() + CommitLog::Segment::HEADER_SIZE) * 10,
+  const std::string dir = tmp_path + "/test-r2seg";
+  writeAndReadPartition(dir, 15,
+                        max_segment_size * 10,
                         big_partition_size, true);
+  BOOST_CHECK_EQUAL(countFiles(dir), 2 * 2);
 }
 
 BOOST_AUTO_TEST_CASE(test_partition_ten_segment_with_reread)
 {
-  writeAndReadPartition("/test-10seg", 100,
-                        (little_payload.size() + CommitLog::Segment::HEADER_SIZE) * 10,
+  const std::string dir = tmp_path + "/test-r10seg";
+  writeAndReadPartition(dir, 100,
+                        max_segment_size * 10,
                         big_partition_size, true);
+  BOOST_CHECK_EQUAL(countFiles(dir), 10 * 2);
 }
 
-// BOOST_AUTO_TEST_CASE(test_partition_thousand_segment_with_reread)
-// {
-//   writeAndReadPartition("/test-1000seg", 10000,
-//                         (little_payload.size() + CommitLog::Segment::HEADER_SIZE) * 10,
-//                         big_partition_size, true);
-// }
+BOOST_AUTO_TEST_CASE(test_partition_hundred_segment_with_reread)
+{
+  const std::string dir = tmp_path + "/test-r100seg";
+  writeAndReadPartition(dir, 1100,
+                        max_segment_size * 10,
+                        big_partition_size, true);
+  BOOST_CHECK_EQUAL(countFiles(dir), 100 * 2);
+}
 
 BOOST_AUTO_TEST_CASE(test_partition_one_segment_reopen_with_reread)
 {
-  writeAndReadPartition("/test-1reopenseg", 2,
-                        (little_payload.size() + CommitLog::Segment::HEADER_SIZE) * 10,
+  const std::string dir = tmp_path + "/test-r1reopenseg";
+  writeAndReadPartition(dir, 2,
+                        max_segment_size * 10,
                         big_partition_size, true);
-  writeAndReadPartition("/test-1reopenseg", 2,
-                        (little_payload.size() + CommitLog::Segment::HEADER_SIZE) * 10,
+  writeAndReadPartition(dir, 2,
+                        max_segment_size * 10,
                         big_partition_size, true);
+  BOOST_CHECK_EQUAL(countFiles(dir), 1 * 2);
 }
 
 BOOST_AUTO_TEST_CASE(test_partition_new_segment_reopen_with_reread)
 {
-  writeAndReadPartition("/test-newseg", 20,
-                        (little_payload.size() + CommitLog::Segment::HEADER_SIZE) * 10,
+  const std::string dir = tmp_path + "/test-rnewseg";
+  writeAndReadPartition(dir, 20,
+                        max_segment_size * 10,
                         big_partition_size, true);
-  writeAndReadPartition("/test-newseg", 1,
-                        (little_payload.size() + CommitLog::Segment::HEADER_SIZE) * 10,
+  writeAndReadPartition(dir, 1,
+                        max_segment_size * 10,
                         big_partition_size, true);
-  writeAndReadPartition("/test-newseg", 15,
-                        (little_payload.size() + CommitLog::Segment::HEADER_SIZE) * 10,
+  writeAndReadPartition(dir, 15,
+                        max_segment_size * 10,
                         big_partition_size, true);
-  writeAndReadPartition("/test-newseg", 30,
-                        (little_payload.size() + CommitLog::Segment::HEADER_SIZE) * 10,
+  writeAndReadPartition(dir, 30,
+                        max_segment_size * 10,
                         big_partition_size, true);
+  BOOST_CHECK_EQUAL(countFiles(dir), 6 * 2);
 }
+
+// ============================
+
+BOOST_AUTO_TEST_CASE(test_partition_with_max_size)
+{
+  const std::string dir = tmp_path + "/test-maxsize";
+  writeAndReadPartition(dir, 100,
+                        max_segment_size * 10,
+                        max_segment_size * 10 * 2, false);
+
+  BOOST_CHECK_EQUAL(countFiles(dir), 2 * 2);
+}
+
+BOOST_AUTO_TEST_CASE(test_partition_with_ttl)
+{
+  const std::string dir = tmp_path + "/test-ttl";
+  writeAndReadPartition(dir, 50,
+                        max_segment_size * 10,
+                        big_partition_size, false, 1 /* ttl = 1 sec */);
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+
+  writeAndReadPartition(dir, 50,
+                        max_segment_size * 10,
+                        big_partition_size, false, 1 /* ttl = 1 sec */);
+
+  BOOST_CHECK_EQUAL(countFiles(dir), 5 * 2);
+}
+
+// ============================
 
 BOOST_AUTO_TEST_CASE(test_partition_multithread)
 {
-  CommitLog::Partition partition(tmp_path + "/test-multithread",
-                                 (little_payload.size() + CommitLog::Segment::HEADER_SIZE) * 10,
-                                 big_partition_size, 0);
+  const std::string dir = tmp_path + "/test-multithread";
+  CommitLog::Partition partition(dir, max_segment_size * 10, big_partition_size, 0);
   auto res = partition.open();
   BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
 
@@ -219,4 +286,6 @@ BOOST_AUTO_TEST_CASE(test_partition_multithread)
   }
   for (auto& thread : threads)
     thread.join();
+
+  BOOST_CHECK_EQUAL(countFiles(dir), 91 * 2);
 }

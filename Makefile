@@ -74,6 +74,8 @@ partition-test: check-test $(TEST_PATH)/partition-test
 
 test: index-test segment-test partition-test
 
+t: partition-test
+
 clean:
 	rm -f Makefile.deps $(PROTOS_PATH)/*.cc $(PROTOS_PATH)/*.h
 	find . -name "*.o" | xargs rm -f
