@@ -10,6 +10,7 @@ GRPC_CPP_PLUGIN_PATH ?= `which $(GRPC_CPP_PLUGIN)`
 PROTOS_PATH = protos
 SRC_PATH = src
 TEST_PATH = test
+TEST_OUTPUT_PATH = /tmp/mykafka-test
 
 vpath %.proto $(PROTOS_PATH)
 
@@ -79,12 +80,14 @@ PROTOC_CMD = which $(PROTOC)
 PROTOC_CHECK_CMD = $(PROTOC) --version | grep -q libprotoc.3
 PLUGIN_CHECK_CMD = which $(GRPC_CPP_PLUGIN)
 TEST_DIR_CHECK_CMD = stat $(TEST_PATH)
+TEST_OUTPUT_DIR_CHECK_CMD = stat $(TEST_OUTPUT_PATH)
 HAS_PROTOC = $(shell $(PROTOC_CMD) > /dev/null && echo true || echo false)
 ifeq ($(HAS_PROTOC),true)
 HAS_VALID_PROTOC = $(shell $(PROTOC_CHECK_CMD) 2> /dev/null && echo true || echo false)
 endif
 HAS_PLUGIN = $(shell $(PLUGIN_CHECK_CMD) > /dev/null && echo true || echo false)
 HAS_TEST_DIR = $(shell $(TEST_DIR_CHECK_CMD) > /dev/null && echo true || echo false)
+HAS_TEST_OUTPUT_DIR = $(shell $(TEST_OUTPUT_DIR_CHECK_CMD) > /dev/null && echo true || echo false)
 
 SYSTEM_OK = false
 ifeq ($(HAS_VALID_PROTOC),true)
@@ -96,6 +99,9 @@ endif
 check-test:
 ifneq ($(HAS_TEST_DIR),true)
 	mkdir -p $(TEST_PATH)
+endif
+ifneq ($(HAS_TEST_OUTPUT_DIR),true)
+	mkdir -p $(TEST_OUTPUT_PATH)
 endif
 
 system-check:

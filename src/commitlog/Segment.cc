@@ -14,14 +14,14 @@ namespace CommitLog
     std::string getIndexFilename(const std::string& path, int64_t base_offset)
     {
       char buffer[PATH_MAX] = {0};
-      sprintf(buffer, "%s%020" PRId64 ".index", path.c_str(), base_offset);
+      sprintf(buffer, "%s/%020" PRId64 ".index", path.c_str(), base_offset);
       return std::string(buffer);
     }
 
     std::string getLogFilename(const std::string& path, int64_t base_offset)
     {
       char buffer[PATH_MAX] = {0};
-      sprintf(buffer, "%s%020" PRId64 ".log", path.c_str(), base_offset);
+      sprintf(buffer, "%s/%020" PRId64 ".log", path.c_str(), base_offset);
       return std::string(buffer);
     }
   } // namespace

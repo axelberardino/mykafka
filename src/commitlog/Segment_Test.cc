@@ -21,7 +21,7 @@ namespace
     return res;
   }
 
-  const std::string tmp_path = "/tmp/";
+  const std::string tmp_path = "/tmp/mykafka-test";
   const std::array<std::string, 10> payloads =
     {
       "{my_payload:apple, value:1}",
