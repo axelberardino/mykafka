@@ -5,6 +5,7 @@
 #include <linux/limits.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/stat.h>
 #include <cassert>
 
 namespace CommitLog
@@ -306,6 +307,20 @@ namespace CommitLog
         out << c;
       out << "\n";
     }
+
+    return Utils::err(mykafka::Error::OK);
+  }
+
+  mykafka::Error
+  Segment::statInfo(int64_t& size, int64_t& mtime) const
+  {
+    struct stat buf;
+    if (::fstat(fd_, &buf) < 0)
+      return Utils::err(mykafka::Error::LOG_ERROR,
+                        "Can't stat segment file " + filename_ + "!");
+
+    size = buf.st_size;
+    mtime = buf.st_mtime;
 
     return Utils::err(mykafka::Error::OK);
   }

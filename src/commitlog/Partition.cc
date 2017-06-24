@@ -34,8 +34,10 @@ namespace CommitLog
     }
   } // namespace
 
-  Partition::Partition(const std::string& path, int64_t max_segment_size, int64_t max_partition_size)
+  Partition::Partition(const std::string& path, int64_t max_segment_size,
+                       int64_t max_partition_size, int64_t segment_ttl)
     : max_segment_size_(max_segment_size), max_partition_size_(max_partition_size),
+      segment_ttl_(segment_ttl), physical_size_(0),
       active_segment_(0), path_(path), name_(), segments_()
   {
   }
@@ -51,6 +53,8 @@ namespace CommitLog
     fs::path raw_path(path_);
     try
     {
+      int64_t size = 0;
+      int64_t ts = 0;
       raw_path = fs::absolute(raw_path);
       path_ = raw_path.string();
       name_ = raw_path.filename().string();
@@ -67,6 +71,13 @@ namespace CommitLog
           delete segment;
           return res;
         }
+        res = segment->statInfo(size, ts);
+        if (res.code() != mykafka::Error::OK)
+        {
+          delete segment;
+          return res;
+        }
+        physical_size_ += size;
         segments_.push_back(segment);
       }
 
@@ -89,6 +100,8 @@ namespace CommitLog
       return Utils::err(mykafka::Error::INVALID_FILENAME, e.what());
     }
 
+    boost::lock_guard<boost::shared_mutex> lock(mutex_);
+    cleanOldSegments();
     return Utils::err(mykafka::Error::OK);
   }
 
@@ -116,6 +129,8 @@ namespace CommitLog
     auto res = (*active_segment_).write(payload, offset);
     if (res.code() != mykafka::Error::OK)
       return res;
+
+    physical_size_ += payload.size() + Segment::HEADER_SIZE;
 
     return Utils::err(mykafka::Error::OK);
   }
@@ -162,12 +177,20 @@ namespace CommitLog
     return active_segment_;
   }
 
+  int64_t
+  Partition::physicalSize() const
+  {
+    boost::shared_lock<boost::shared_mutex> lock(mutex_);
+    return physical_size_;
+  }
+
   mykafka::Error
   Partition::close()
   {
     boost::lock_guard<boost::shared_mutex> lock(mutex_);
 
     active_segment_ = 0;
+    physical_size_ = 0;
     for (auto segment : segments_)
     {
       auto res = segment->close();
@@ -183,19 +206,52 @@ namespace CommitLog
   mykafka::Error
   Partition::deletePartition()
   {
-    return Utils::err(mykafka::Error::OK);
-  }
+    auto res = close();
+    if (res.code() != mykafka::Error::OK)
+      return res;
 
-  mykafka::Error
-  Partition::truncate()
-  {
+    fs::remove_all(path_);
+
     return Utils::err(mykafka::Error::OK);
   }
 
   mykafka::Error
   Partition::cleanOldSegments()
   {
-    return Utils::err(mykafka::Error::OK);
+    auto res = Utils::err(mykafka::Error::OK);
+    const int64_t now = ::time(0);
+    const int64_t seg_ttl = segment_ttl_;
+    const int64_t max_size = max_partition_size_;
+    segments_.erase(std::remove_if(segments_.begin(), segments_.end(),
+                                   [&](Segment* segment)
+                                   {
+                                     int64_t size = 0;
+                                     int64_t ts = 0;
+                                     auto local_res = segment->statInfo(size, ts);
+                                     if (local_res.code() != mykafka::Error::OK)
+                                     {
+                                       res = local_res;
+                                       return false;
+                                     }
+                                     const bool too_old = seg_ttl != 0 && now - ts > seg_ttl;
+                                     const bool partition_too_large = max_size != 0 &&
+                                       physical_size_ > max_size;
+                                     if (too_old || partition_too_large)
+                                     {
+                                       local_res = segment->deleteSegment();
+                                       if (local_res.code() != mykafka::Error::OK)
+                                       {
+                                         res = local_res;
+                                         return false;
+                                       }
+                                       delete segment;
+                                       physical_size_ -= size;
+                                       return true;
+                                     }
+                                     return false;
+                                   }), segments_.end());
+
+    return res;
   }
 
   mykafka::Error

@@ -156,6 +156,14 @@ namespace CommitLog
     */
     mykafka::Error dump(std::ostream& out) const;
 
+    /*!
+    ** Get the physical size and the last
+    ** modification time of this segments.
+    **
+    ** @return Error code 0 if no error, or a detailed error.
+    */
+    mykafka::Error statInfo(int64_t& size, int64_t& mtime) const;
+
   private:
     struct Entry
     {

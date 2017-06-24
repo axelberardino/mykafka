@@ -31,9 +31,13 @@ namespace CommitLog
     **
     ** @param path The path to the partition.
     ** @param max_segment_size The max size per segments.
-    ** @param max_partition_size The max total size of this partition.
+    ** @param max_partition_size The max size of this
+    **          partition (0 = no size restriction).
+    ** @param segment_ttl Time after a segment has to
+    **          be destroyed (0 = disabled).
     */
-    Partition(const std::string& path, int64_t max_segment_size, int64_t max_partition_size);
+    Partition(const std::string& path, int64_t max_segment_size,
+              int64_t max_partition_size, int64_t segment_ttl);
 
     /*!
     ** Close all files own and free segments.
@@ -92,6 +96,13 @@ namespace CommitLog
     Segment* activeSegment() const;
 
     /*!
+    ** Get an approximate physical size of the partition.
+    **
+    ** @return The physical size.
+    */
+    int64_t physicalSize() const;
+
+    /*!
     ** Close all segments, and empty the segment
     ** list (free'ing all segments).
     **
@@ -99,11 +110,21 @@ namespace CommitLog
     */
     mykafka::Error close();
 
+    /*!
+    ** Physically delete this partition and close all segments.
+    **
+    ** @return Error code 0 if no error, or a detailed error.
+    */
     mykafka::Error deletePartition();
-    mykafka::Error truncate();
-    mykafka::Error cleanOldSegments();
 
   private:
+    /*!
+    ** Remove old segments (either regarding size or timestamp).
+    **
+    ** @return Error code 0 if no error, or a detailed error.
+    */
+    mykafka::Error cleanOldSegments();
+
     /*!
     ** Search for a segment containing offset.
     ** Try to find the closest segment where search_offset can be.
@@ -118,6 +139,8 @@ namespace CommitLog
   private:
     int64_t max_segment_size_;
     int64_t max_partition_size_;
+    int64_t segment_ttl_;
+    int64_t physical_size_;
     std::atomic<Segment*> active_segment_;
     std::string path_;
     std::string name_;
