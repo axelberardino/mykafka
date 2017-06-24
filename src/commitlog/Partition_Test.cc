@@ -14,7 +14,7 @@
 
 namespace
 {
-  const int64_t big_partition_size = 1 * 1024 * 1024 * 1024;
+  const int64_t big_partition_size = 0;
   const std::string tmp_path = "/tmp/mykafka-test/partition-test";
   const std::string little_payload = "{my_payload:test, value:carrotandj}";
   const std::vector<char> v_payload(little_payload.begin(), little_payload.end());

@@ -114,7 +114,8 @@ namespace CommitLog
         return res;
       }
       segments_.push_back(segment);
-      cleanOldSegments(); // /!\ If segments are small, could destroy performance...
+      if (segment_ttl_ != 0 || max_partition_size_ != 0)
+        cleanOldSegments(); // /!\ If segments are small, could destroy performance...
       active_segment_ = segments_.back();
     }
 
