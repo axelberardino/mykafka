@@ -60,9 +60,11 @@ namespace
   }
 
   void writeAndReadPartition(const std::string& suffix, int64_t nb_payload,
-                             int64_t max_segment_size, int64_t max_partition_size, bool read)
+                             int64_t max_segment_size, int64_t max_partition_size,
+                             bool read, int64_t ttl = 0)
   {
-    CommitLog::Partition partition(tmp_path + suffix, max_segment_size, max_partition_size);
+    CommitLog::Partition partition(tmp_path + suffix, max_segment_size,
+                                   max_partition_size, ttl);
     auto res = partition.open();
     BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
 
@@ -200,7 +202,7 @@ BOOST_AUTO_TEST_CASE(test_partition_multithread)
 {
   CommitLog::Partition partition(tmp_path + "/test-multithread",
                                  (little_payload.size() + CommitLog::Segment::HEADER_SIZE) * 10,
-                                 big_partition_size);
+                                 big_partition_size, 0);
   auto res = partition.open();
   BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
 
