@@ -74,7 +74,12 @@ partition-test: check-test $(TEST_PATH)/partition-test
 
 test: index-test segment-test partition-test
 
-t: partition-test
+$(TEST_PATH)/commitlog-bench: $(SOURCES) $(OBJ) $(SRC_PATH)/commitlog/CommitLog_Bench.o
+	$(CXX) $(OBJ) $(SRC_PATH)/commitlog/CommitLog_Bench.o $(LDFLAGS) -lboost_unit_test_framework -o $@
+commitlog-bench: check-test $(TEST_PATH)/commitlog-bench
+	$(TEST_PATH)/$@ --log_level=test_suite
+
+bench: commitlog-bench
 
 clean:
 	rm -f Makefile.deps $(PROTOS_PATH)/*.cc $(PROTOS_PATH)/*.h
@@ -82,6 +87,8 @@ clean:
 
 distclean: clean
 	rm -f $(CLIENT) $(SERVER) ./test/*
+
+t: partition-test
 
 PROTOC_CMD = which $(PROTOC)
 PROTOC_CHECK_CMD = $(PROTOC) --version | grep -q libprotoc.3

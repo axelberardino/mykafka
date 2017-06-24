@@ -123,12 +123,12 @@ namespace CommitLog
   mykafka::Error
   Index::close()
   {
-    sync();
-    if (ftruncate(fd_, position_) < 0)
-      return Utils::err(mykafka::Error::FILE_ERROR, "Can't resize index " + filename_ + "!");
-
+    //    sync(); // FIXME : Cost a lost but could be mandatory.
     if (munmap(addr_, size_) < 0)
       return Utils::err(mykafka::Error::FILE_ERROR, "Can't unmap index " + filename_ + "!");
+
+    if (ftruncate(fd_, position_) < 0)
+      return Utils::err(mykafka::Error::FILE_ERROR, "Can't resize index " + filename_ + "!");
 
     if (::close(fd_))
       return Utils::err(mykafka::Error::FILE_ERROR,

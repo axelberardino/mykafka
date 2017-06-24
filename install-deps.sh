@@ -1,6 +1,11 @@
 #!/bin/bash
 
-sudo aptitude install build-essential autoconf libtool libgflags-dev libgtest-dev clang libc++-dev automake libboost-test-dev libboost-mutex-dev libboost-system-dev libboost-thread-dev libboost-filesystem-dev && \
+sudo aptitude install \
+     build-essential autoconf libtool libgflags-dev \
+     libgtest-dev clang libc++-dev automake \
+     libboost-test-dev libboost-mutex-dev \
+     libboost-system-dev libboost-thread-dev \
+     libboost-filesystem-dev wbritish && \
 git clone -b $(curl -L http://grpc.io/release) https://github.com/grpc/grpc && \
 cd grpc && \
 git submodule update --init && \
