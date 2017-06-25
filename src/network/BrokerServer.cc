@@ -21,7 +21,7 @@ namespace Network
   void
   BrokerServer::specificHandle()
   {
-    new SendMessageService(service_, cq_.get());
-    new GetMessageService(service_, cq_.get());
+    new SendMessageService(broker_, service_, cq_.get());
+    new GetMessageService(broker_, service_, cq_.get());
   }
 } // Network
