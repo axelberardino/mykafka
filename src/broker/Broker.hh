@@ -45,7 +45,7 @@ namespace Broker
     void sendMessage(mykafka::SendMessageRequest& request,
                      mykafka::SendMessageResponse& response);
 
-    bool load();
+    mykafka::Error load();
     bool loadConf();
 
   private:

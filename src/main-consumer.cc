@@ -15,6 +15,7 @@ int main(int argc, char** argv)
   std::string topic;
   int32_t partition;
   int64_t offset;
+  int64_t nb_offset;
 
   po::options_description desc("Kafka consumer");
   desc.add_options()
@@ -23,6 +24,8 @@ int main(int argc, char** argv)
      po::value<std::string>(&address)->default_value("localhost:9000"), "Set the broker address")
     ("topic", po::value<std::string>(&topic)->default_value("default"), "Set the topic where ")
     ("offset", po::value<int64_t>(&offset)->default_value(0), "Set the starting offset")
+    ("nb_offset", po::value<int64_t>(&nb_offset)->default_value(0),
+     "Set the max number of offset to read (0 = no limit)")
     ("partition", po::value<int32_t>(&partition)->default_value(0), "Set the partition")
     ;
 
@@ -50,12 +53,19 @@ int main(int argc, char** argv)
     request.set_offset(offset);
     auto res = client.getMessage(request, response);
     if (res.ok())
-      std::cout << "Payload got: " << response.payload() << std::endl;
+      std::cout << "Payload at offset " << offset << ": " << response.payload() << std::endl;
     else
-    {
       std::cout << res.error_code() << ": " << res.error_message() << std::endl;
+
+    if (response.error().code() != mykafka::Error::OK)
+    {
+      std::cout << response.error().code() << ": "
+                << response.error().msg() << std::endl;
+      stop = true;
     }
     ++offset;
+    if (offset >= nb_offset)
+      stop = true;
   }
 
   return 0;

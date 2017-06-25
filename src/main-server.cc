@@ -9,13 +9,19 @@ namespace po = boost::program_options;
 
 int main(int argc, char** argv)
 {
+  int32_t nb_threads;
+  int32_t port;
+  int32_t broker_id;
+  std::string log_dir;
+
   po::options_description desc("Kafka broker");
   desc.add_options()
     ("help", "produce help message")
-    ("nb-threads", po::value<int32_t>()->default_value(0), "Set the number of thread (0 = use the core number)")
-    ("port", po::value<int32_t>()->default_value(9000), "Set the port")
-    ("broker-id", po::value<int32_t>()->default_value(0), "Set the broker-id")
-    ("log-dir", po::value<std::string>()->default_value("/tmp/myKafka"), "Set the log directory")
+    ("nb-threads", po::value<int32_t>(&nb_threads)->default_value(0),
+     "Set the number of thread (0 = use the core number)")
+    ("port", po::value<int32_t>(&port)->default_value(9000), "Set the port")
+    ("broker-id", po::value<int32_t>(&broker_id)->default_value(0), "Set the broker-id")
+    ("log-dir", po::value<std::string>(&log_dir)->default_value("/tmp/myKafka"), "Set the log directory")
     ;
 
   po::variables_map vm;
@@ -28,15 +34,23 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  if (vm["log-dir"].as<std::string>().empty())
+  if (log_dir.empty())
   {
     std::cout << "Empty log-dir!" << std::endl;
     return 1;
   }
 
-  Broker::Broker broker(vm["log-dir"].as<std::string>());
-  Network::BrokerServer server("0.0.0.0:" + std::to_string(vm["port"].as<int32_t>()),
-                               broker, vm["nb-threads"].as<int32_t>());
+  Broker::Broker broker(log_dir);
+  auto res = broker.load();
+  if (res.code() != mykafka::Error::OK)
+  {
+    std::cout << "Can't load the conf from " << log_dir << ", error is: ["
+              << res.code() << "] " << res.msg()
+              << std::endl;
+    return 1;
+  }
+
+  Network::BrokerServer server("0.0.0.0:" + std::to_string(port), broker, nb_threads);
   server.run();
 
   return 0;

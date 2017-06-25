@@ -1,6 +1,8 @@
 #include "broker/Broker.hh"
+#include "commitlog/Utils.hh"
 
 #include <memory>
+#include <cassert>
 
 namespace Broker
 {
@@ -15,21 +17,21 @@ namespace Broker
   {
   }
 
-  bool
+  mykafka::Error
   Broker::load()
   {
     // Info info{4096, 0, 0, 0, 0, 0, 0,
     //     std::vector<std::string>(), std::vector<std::string>(),
     //     std::make_shared<CommitLog::Partition>(base_path_ + "/test", 0, 0, 0)};
 
-    auto partition = std::make_shared<CommitLog::Partition>(base_path_ + "/test", 0, 0, 0);
+    auto partition = std::make_shared<CommitLog::Partition>(base_path_ + "/default-0", 0, 0, 0);
     auto res = partition->open();
     if (res.code() != mykafka::Error::OK)
-      return false;
+      return res;
 
-    topics_["bookstore"][0].partition = partition;
+    topics_["default"][0].partition = partition;
 
-    return true;
+    return CommitLog::Utils::err(mykafka::Error::OK);
   }
 
   bool
@@ -43,13 +45,13 @@ namespace Broker
   Broker::getMessage(mykafka::GetMessageRequest& request,
                      mykafka::GetMessageResponse& response)
   {
-    auto partition = topics_["bookstore"][0].partition;
+    auto partition = topics_["default"][0].partition;
+    assert(partition);
 
     std::cout << "Get message from topic " << request.topic()
               << " at offset: " << request.offset() << std::endl;
 
     std::vector<char> payload;
-
     auto res = partition->readAt(payload, request.offset());
     auto error = response.error();
     error.set_code(res.code());
@@ -61,7 +63,8 @@ namespace Broker
   Broker::sendMessage(mykafka::SendMessageRequest& request,
                       mykafka::SendMessageResponse& response)
   {
-    auto partition = topics_["bookstore"][0].partition;
+    auto partition = topics_["default"][0].partition;
+    assert(partition);
 
     std::cout << "Send to topic " << request.topic() << "-"
               << request.partition() << ": "
