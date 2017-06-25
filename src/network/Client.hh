@@ -44,6 +44,17 @@ namespace Network
     grpc::Status sendMessage(mykafka::SendMessageRequest request,
                              mykafka::SendMessageResponse& response);
 
+    /*!
+    ** Get a payload from a given offset.
+    **
+    ** @param request The message containing the offset.
+    ** @param response The server's answer.
+    **
+    ** @return grpc::ok on succeed.
+    */
+    grpc::Status getMessage(mykafka::GetMessageRequest request,
+                            mykafka::GetMessageResponse& response);
+
   private:
     const std::string address_;
     int64_t client_connection_timeout_;

@@ -31,27 +31,36 @@ SOURCES = \
 HEADERS = $(SOURCES:.cc=.hh)
 
 PRODUCER_SRC = $(SRC_PATH)/producer.cc
+CONSUMER_SRC = $(SRC_PATH)/consumer.cc
 SERVER_SRC = $(SRC_PATH)/server.cc
 GRPC_SRC = $(PROTOS:.proto=.grpc.pb.cc)
 PB_SRC = $(PROTOS:.proto=.pb.cc)
 
+ALL_SRC = $(GRPC_SRC) $(PB_SRC) $(SOURCES) $(HEADERS) \
+          $(PRODUCER_SRC) $(CONSUMER_SRC) $(SERVER_SRC)
+
 OBJ = $(SOURCES:.cc=.o) $(GRPC_SRC:.grpc.pb.cc=.grpc.pb.o) $(PB_SRC:.pb.cc=.pb.o)
 PRODUCER_OBJ =  $(OBJ) $(PRODUCER_SRC:.cc=.o)
+CONSUMER_OBJ =  $(OBJ) $(CONSUMER_SRC:.cc=.o)
 SERVER_OBJ = $(OBJ) $(SERVER_SRC:.cc=.o)
 
 PRODUCER = mykafka-producer
+CONSUMER = mykafka-consumer
 SERVER = mykafka-server
 
-all: $(PRODUCER) $(SERVER)
+all: $(PRODUCER) $(CONSUMER) $(SERVER)
 
 $(PRODUCER): system-check $(PRODUCER_OBJ) $(HEADERS)
 	$(CXX) $(PRODUCER_OBJ) $(LDFLAGS) -o $@
 
+$(CONSUMER): system-check $(CONSUMER_OBJ) $(HEADERS)
+	$(CXX) $(CONSUMER_OBJ) $(LDFLAGS) -o $@
+
 $(SERVER): system-check $(SERVER_OBJ) $(HEADERS)
 	$(CXX) $(SERVER_OBJ) $(LDFLAGS) -o $@
 
-Makefile.deps: $(GRPC_SRC) $(PB_SRC) $(SOURCES) $(HEADERS) $(PRODUCER_SRC) $(SERVER_SRC)
-	$(CXX) $(CXXFLAGS) -MM $(SOURCES) $(PRODUCER_SRC) $(SERVER_SRC) > Makefile.deps
+Makefile.deps: $(ALL_SRC)
+	$(CXX) $(CXXFLAGS) -MM $(ALL_SRC) > Makefile.deps
 
 .PRECIOUS: %.o
 %.o: %.cc
@@ -94,7 +103,7 @@ clean:
 	find . -name "*.o" | xargs rm -f
 
 distclean: clean
-	rm -f $(PRODUCER) $(SERVER) ./test/*
+	rm -f $(PRODUCER) $(CONSUMER) $(SERVER) ./test/*
 
 t: partition-test
 
