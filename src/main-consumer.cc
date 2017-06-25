@@ -11,11 +11,19 @@ namespace po = boost::program_options;
 
 int main(int argc, char** argv)
 {
+  std::string address;
+  std::string topic;
+  int32_t partition;
+  int64_t offset;
+
   po::options_description desc("Kafka consumer");
   desc.add_options()
-    ("help", "produce help message")
-    ("broker-address", po::value<std::string>()->default_value("localhost:9000"), "Set the broker address")
-    ("offset", po::value<int64_t>()->default_value(0), "Set the starting offset")
+    ("help", "Produce help message")
+    ("broker-address",
+     po::value<std::string>(&address)->default_value("localhost:9000"), "Set the broker address")
+    ("topic", po::value<std::string>(&topic)->default_value("default"), "Set the topic where ")
+    ("offset", po::value<int64_t>(&offset)->default_value(0), "Set the starting offset")
+    ("partition", po::value<int32_t>(&partition)->default_value(0), "Set the partition")
     ;
 
   po::variables_map vm;
@@ -29,16 +37,16 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  const std::string address = vm["broker-address"].as<std::string>();
   Network::Client client(address);
   std::cout << "Start to receive from " << address << std::endl;
 
   bool stop = false;
-  int64_t offset = vm["offset"].as<int64_t>();
   while (!stop)
   {
     mykafka::GetMessageRequest request;
     mykafka::GetMessageResponse response;
+    request.set_topic(topic);
+    request.set_partition(partition);
     request.set_offset(offset);
     auto res = client.getMessage(request, response);
     if (res.ok())

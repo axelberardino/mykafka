@@ -11,10 +11,17 @@ namespace po = boost::program_options;
 
 int main(int argc, char** argv)
 {
+  std::string address;
+  std::string topic;
+  int32_t partition;
+
   po::options_description desc("Kafka producer");
   desc.add_options()
-    ("help", "produce help message")
-    ("broker-address", po::value<std::string>()->default_value("localhost:9000"), "Set the broker address")
+    ("help", "Produce help message")
+    ("broker-address",
+     po::value<std::string>(&address)->default_value("localhost:9000"), "Set the broker address")
+    ("topic", po::value<std::string>(&topic)->default_value("default"), "Set the topic where ")
+    ("partition", po::value<int32_t>(&partition)->default_value(0), "Set the partition")
     ;
 
   po::variables_map vm;
@@ -28,7 +35,6 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  const std::string address = vm["broker-address"].as<std::string>();
   Network::Client client(address);
   std::cout << "Start to send to " << address << std::endl;
   std::string line;
@@ -36,6 +42,8 @@ int main(int argc, char** argv)
   {
       mykafka::SendMessageRequest request;
       mykafka::SendMessageResponse response;
+      request.set_topic(topic);
+      request.set_partition(partition);
       request.set_payload(line);
       auto res = client.sendMessage(request, response);
       if (res.ok())

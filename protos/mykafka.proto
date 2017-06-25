@@ -20,7 +20,9 @@ message Error
 
 message SendMessageRequest
 {
-  string payload = 1;
+  string topic = 1;
+  int32 partition = 2;
+  bytes payload = 3;
 }
 
 message SendMessageResponse
@@ -31,13 +33,15 @@ message SendMessageResponse
 
 message GetMessageRequest
 {
-  int64 offset = 1;
+  string topic = 1;
+  int32 partition = 2;
+  int64 offset = 3;
 }
 
 message GetMessageResponse
 {
   Error error = 1;
-  string payload = 2;
+  bytes payload = 2;
 }
 
 service Broker

@@ -1,8 +1,13 @@
 #include "broker/Broker.hh"
 
+#include <memory>
+
 namespace Broker
 {
-  Broker::Broker()
+  const std::string CONFIG_FILENAME = "broker.conf";
+
+  Broker::Broker(const std::string& base_path)
+    : base_path_(base_path)
   {
   }
 
@@ -10,25 +15,64 @@ namespace Broker
   {
   }
 
+  bool
+  Broker::load()
+  {
+    // Info info{4096, 0, 0, 0, 0, 0, 0,
+    //     std::vector<std::string>(), std::vector<std::string>(),
+    //     std::make_shared<CommitLog::Partition>(base_path_ + "/test", 0, 0, 0)};
+
+    auto partition = std::make_shared<CommitLog::Partition>(base_path_ + "/test", 0, 0, 0);
+    auto res = partition->open();
+    if (res.code() != mykafka::Error::OK)
+      return false;
+
+    topics_["bookstore"][0].partition = partition;
+
+    return true;
+  }
+
+  bool
+  Broker::loadConf()
+  {
+    // conf reader class
+    return true;
+  }
+
   void
   Broker::getMessage(mykafka::GetMessageRequest& request,
                      mykafka::GetMessageResponse& response)
   {
-    std::cout << "Get message at offset: " << request.offset() << std::endl;
+    auto partition = topics_["bookstore"][0].partition;
+
+    std::cout << "Get message from topic " << request.topic()
+              << " at offset: " << request.offset() << std::endl;
+
+    std::vector<char> payload;
+
+    auto res = partition->readAt(payload, request.offset());
     auto error = response.error();
-    error.set_code(mykafka::Error::OK);
-    error.set_msg("ok");
-    response.set_payload("Got payload");
+    error.set_code(res.code());
+    error.set_msg(res.msg());
+    response.set_payload(std::string(payload.begin(), payload.end()));
   }
 
   void
   Broker::sendMessage(mykafka::SendMessageRequest& request,
                       mykafka::SendMessageResponse& response)
   {
-    std::cout << "Call commit log: " << request.payload() << std::endl;
+    auto partition = topics_["bookstore"][0].partition;
+
+    std::cout << "Send to topic " << request.topic() << "-"
+              << request.partition() << ": "
+              << request.payload() << std::endl;
+
+    std::vector<char> payload(request.payload().begin(), request.payload().end());
+    int64_t offset = 0;
+    auto res = partition->write(payload, offset);
     auto error = response.error();
-    error.set_code(mykafka::Error::OK);
-    error.set_msg("ok");
-    response.set_offset(-1);
+    error.set_code(res.code());
+    error.set_msg(res.msg());
+    response.set_offset(offset);
   }
 } // Broker
