@@ -20,7 +20,7 @@ int main(int argc, char** argv)
     ("help", "Produce help message")
     ("broker-address",
      po::value<std::string>(&address)->default_value("localhost:9000"), "Set the broker address")
-    ("topic", po::value<std::string>(&topic)->default_value("default"), "Set the topic where ")
+    ("topic", po::value<std::string>(&topic)->default_value("default"), "Set the topic")
     ("partition", po::value<int32_t>(&partition)->default_value(0), "Set the partition")
     ;
 

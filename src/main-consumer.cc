@@ -22,7 +22,7 @@ int main(int argc, char** argv)
     ("help", "Produce help message")
     ("broker-address",
      po::value<std::string>(&address)->default_value("localhost:9000"), "Set the broker address")
-    ("topic", po::value<std::string>(&topic)->default_value("default"), "Set the topic where ")
+    ("topic", po::value<std::string>(&topic)->default_value("default"), "Set the topic")
     ("offset", po::value<int64_t>(&offset)->default_value(0), "Set the starting offset")
     ("nb_offset", po::value<int64_t>(&nb_offset)->default_value(0),
      "Set the max number of offset to read (0 = no limit)")
