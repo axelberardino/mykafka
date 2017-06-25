@@ -2,10 +2,13 @@
 #include "network/SendMessageService.hh"
 #include "network/GetMessageService.hh"
 
+#include <thread>
+#include <vector>
+
 namespace Network
 {
-  Server::Server(std::string address)
-    : started_(false), address_(address)
+  Server::Server(std::string address, int32_t thread_number)
+    : started_(false), thread_number_(thread_number), address_(address)
   {
   }
 
@@ -29,15 +32,23 @@ namespace Network
     server_ = builder.BuildAndStart();
     started_ = true;
 
-    std::cout << "Server listening on " << address_ << std::endl;
-    handleRpcs();
+    std::cout << "Server listening on " << address_
+              << " using " << thread_number_ << " threads"
+              << std::endl;
+
+
+    std::vector<std::thread> threads;
+    for (int32_t i = 0; i < thread_number_; ++i)
+      threads.emplace_back(std::thread([this]() { handleRpcs(); }));
+    for (auto& thread : threads)
+      thread.join();
   }
 
   void
   Server::handleRpcs()
   {
     new SendMessageService(&service_, cq_.get());
-    //new GetMessageService(&service_, cq_.get());
+    new GetMessageService(&service_, cq_.get());
     void* tag = 0;
     bool ok = false;
 

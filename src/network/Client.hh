@@ -10,11 +10,37 @@
 
 namespace Network
 {
+  /*!
+  ** @class Client
+  **
+  ** Class use to ease the write of myKafka clients.
+  */
   class Client
   {
   public:
+    /*!
+    ** Intialize a client network.
+    **
+    ** @param address The server + port (server:port)
+    ** @param client_connection_timeout Timeout for a query.
+    */
     Client(std::string address, int64_t client_connection_timeout = 200 /* ms */);
+
+    /*!
+    ** Force a reconnect. Already called internally, should'nt be called.
+    **
+    ** @return If reconnection succeed.
+    */
     bool reconnect();
+
+    /*!
+    ** Send a payload to the broker.
+    **
+    ** @param request The message containing the payload.
+    ** @param response The server's answer.
+    **
+    ** @return grpc::ok on succeed.
+    */
     grpc::Status sendMessage(mykafka::SendMessageRequest request,
                              mykafka::SendMessageResponse& response);
 
