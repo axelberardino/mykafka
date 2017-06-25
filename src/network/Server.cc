@@ -1,10 +1,12 @@
 #include "network/Server.hh"
 
 #include "network/SendMessageService.hh"
+#include "network/GetMessageService.hh"
 
 namespace Network
 {
-  Server::Server()
+  Server::Server(const std::string& address)
+    : address_(address)
   {
   }
 
@@ -18,14 +20,12 @@ namespace Network
   void
   Server::run()
   {
-    const std::string server_address("0.0.0.0:50051");
-
     grpc::ServerBuilder builder;
-    builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
+    builder.AddListeningPort(address_, grpc::InsecureServerCredentials());
     builder.RegisterService(&service_);
     cq_ = builder.AddCompletionQueue();
     server_ = builder.BuildAndStart();
-    std::cout << "Server listening on " << server_address << std::endl;
+    std::cout << "Server listening on " << address_ << std::endl;
 
     handleRpcs();
   }
@@ -33,9 +33,8 @@ namespace Network
   void
   Server::handleRpcs()
   {
-    // new HelloCallData(&service_, cq_.get());
-    // new ByeCallData(&service_, cq_.get());
     new SendMessageService(&service_, cq_.get());
+    new GetMessageService(&service_, cq_.get());
     void* tag = 0;
     bool ok = false;
 

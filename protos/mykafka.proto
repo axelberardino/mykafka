@@ -20,7 +20,7 @@ message Error
 
 message SendMessageRequest
 {
-  string record = 1;
+  string payload = 1;
 }
 
 message GetMessageRequest
@@ -28,14 +28,20 @@ message GetMessageRequest
   int64 offset = 1;
 }
 
-message MessageResponse
+message SendMessageResponse
 {
   Error error = 1;
   int64 offset = 2;
 }
 
+message GetMessageResponse
+{
+  Error error = 1;
+  string payload = 2;
+}
+
 service Broker
 {
-  rpc SendMessage(SendMessageRequest) returns (MessageResponse) {}
-  rpc GetMessage(GetMessageRequest) returns (MessageResponse) {}
+  rpc SendMessage(SendMessageRequest) returns (SendMessageResponse) {}
+  rpc GetMessage(GetMessageRequest) returns (GetMessageResponse) {}
 }

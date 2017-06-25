@@ -26,8 +26,8 @@ public:
   int64_t sendMessage(const std::string& user)
   {
     mykafka::SendMessageRequest request;
-    mykafka::MessageResponse response;
-    request.set_record(user);
+    mykafka::SendMessageResponse response;
+    request.set_payload(user);
 
     grpc::ClientContext context;
     std::chrono::system_clock::time_point deadline =

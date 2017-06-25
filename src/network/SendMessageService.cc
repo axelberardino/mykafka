@@ -19,7 +19,7 @@ namespace Network
     new SendMessageService(service_, cq_);
 
 
-    std::cout << "Call commit log: " << request_.record() << std::endl;
+    std::cout << "Call commit log: " << request_.payload() << std::endl;
     auto error = response_.error();
     error.set_code(mykafka::Error::OK);
     error.set_msg("ok");

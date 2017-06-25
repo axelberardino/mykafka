@@ -36,8 +36,8 @@ namespace Network
   private:
     grpc::ServerContext ctx_;
     mykafka::SendMessageRequest request_;
-    mykafka::MessageResponse response_;
-    grpc::ServerAsyncResponseWriter<mykafka::MessageResponse> responder_;
+    mykafka::SendMessageResponse response_;
+    grpc::ServerAsyncResponseWriter<mykafka::SendMessageResponse> responder_;
   };
 } // Network
 

@@ -23,6 +23,7 @@ SOURCES = \
 	$(SRC_PATH)/commitlog/Utils.cc \
 	$(SRC_PATH)/network/Server.cc \
 	$(SRC_PATH)/network/Service.cc \
+	$(SRC_PATH)/network/GetMessageService.cc \
 	$(SRC_PATH)/network/SendMessageService.cc
 
 HEADERS = $(SOURCES:.cc=.hh)
