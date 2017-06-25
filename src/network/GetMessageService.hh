@@ -19,7 +19,7 @@ namespace Network
     ** @param service The rpc async service.
     ** @param cq The async completion queue.
     */
-    GetMessageService(mykafka::Broker::AsyncService* service,
+    GetMessageService(std::shared_ptr<grpc::Service> service,
                       grpc::ServerCompletionQueue* cq);
 
     /*!

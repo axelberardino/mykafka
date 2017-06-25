@@ -2,7 +2,7 @@
 
 namespace Network
 {
-  Service::Service(mykafka::Broker::AsyncService* service,
+  Service::Service(std::shared_ptr<grpc::Service> service,
                    grpc::ServerCompletionQueue* cq)
       : service_(service), cq_(cq), status_(PROCESS)
   {

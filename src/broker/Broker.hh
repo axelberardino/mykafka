@@ -36,6 +36,10 @@ namespace Broker
   class Broker
   {
   public:
+    Broker(); // Give him a server (or a false one) !
+    ~Broker();
+    void run();
+
   private:
     struct Info
     {

@@ -22,7 +22,7 @@ namespace Network
     ** @param service The rpc async service.
     ** @param cq The async completion queue.
     */
-    Service(mykafka::Broker::AsyncService* service, grpc::ServerCompletionQueue* cq);
+    Service(std::shared_ptr<grpc::Service> service, grpc::ServerCompletionQueue* cq);
 
     /*!
     ** Destroy the service.
@@ -43,7 +43,7 @@ namespace Network
     virtual void process() = 0;
 
   protected:
-    mykafka::Broker::AsyncService* service_;
+    std::shared_ptr<grpc::Service> service_;
     grpc::ServerCompletionQueue* cq_;
 
   private:

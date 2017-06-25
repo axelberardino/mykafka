@@ -22,7 +22,8 @@ SOURCES = \
 	$(SRC_PATH)/commitlog/Segment.cc \
 	$(SRC_PATH)/commitlog/Partition.cc \
 	$(SRC_PATH)/commitlog/Utils.cc \
-	$(SRC_PATH)/network/Server.cc \
+	$(SRC_PATH)/network/RpcServer.cc \
+	$(SRC_PATH)/network/BrokerServer.cc \
 	$(SRC_PATH)/network/Client.cc \
 	$(SRC_PATH)/network/Service.cc \
 	$(SRC_PATH)/network/GetMessageService.cc \

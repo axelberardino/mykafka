@@ -1,20 +1,21 @@
-#include "network/Server.hh"
-#include "network/SendMessageService.hh"
-#include "network/GetMessageService.hh"
+#include "network/RpcServer.hh"
+#include "network/Service.hh"
 
 #include <thread>
 #include <vector>
 
 namespace Network
 {
-  Server::Server(std::string address, int32_t thread_number)
+  RpcServer::RpcServer(std::string address,
+                       std::shared_ptr<grpc::Service> service,
+                       int32_t thread_number)
     : started_(false),
       thread_number_(thread_number ? thread_number : std::thread::hardware_concurrency()),
-      address_(address)
+      address_(address), service_(service)
   {
   }
 
-  Server::~Server()
+  RpcServer::~RpcServer()
   {
     if (started_)
     {
@@ -25,11 +26,11 @@ namespace Network
   }
 
   void
-  Server::run()
+  RpcServer::run()
   {
     grpc::ServerBuilder builder;
     builder.AddListeningPort(address_, grpc::InsecureServerCredentials());
-    builder.RegisterService(&service_);
+    builder.RegisterService(service_.get());
     cq_ = builder.AddCompletionQueue();
     server_ = builder.BuildAndStart();
     started_ = true;
@@ -37,7 +38,6 @@ namespace Network
     std::cout << "Server listening on " << address_
               << " using " << thread_number_ << " threads"
               << std::endl;
-
 
     std::vector<std::thread> threads;
     for (int32_t i = 0; i < thread_number_; ++i)
@@ -47,10 +47,9 @@ namespace Network
   }
 
   void
-  Server::handleRpcs()
+  RpcServer::handleRpcs()
   {
-    new SendMessageService(&service_, cq_.get());
-    new GetMessageService(&service_, cq_.get());
+    specificHandle();
     void* tag = 0;
     bool ok = false;
 

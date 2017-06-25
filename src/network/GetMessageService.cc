@@ -2,11 +2,12 @@
 
 namespace Network
 {
-  GetMessageService::GetMessageService(mykafka::Broker::AsyncService* service,
+  GetMessageService::GetMessageService(std::shared_ptr<grpc::Service> service,
                                        grpc::ServerCompletionQueue* cq)
     : Service(service, cq), responder_(&ctx_)
   {
-    service->RequestGetMessage(&ctx_, &request_, &responder_, cq, cq, this);
+    auto async_service = static_cast<mykafka::Broker::AsyncService*>(service.get());
+    async_service->RequestGetMessage(&ctx_, &request_, &responder_, cq, cq, this);
   }
 
   GetMessageService::~GetMessageService()
@@ -17,7 +18,6 @@ namespace Network
   GetMessageService::process()
   {
     new GetMessageService(service_, cq_);
-
 
     std::cout << "Get message at offset: " << request_.offset() << std::endl;
     auto error = response_.error();
