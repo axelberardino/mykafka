@@ -7,7 +7,6 @@
 # include "mykafka.grpc.pb.h"
 
 # include <memory>
-# include <thread>
 
 namespace Network
 {
@@ -23,9 +22,9 @@ namespace Network
     ** Intialize a server.
     **
     ** @param address The server + port (server:port)
+    ** @param thread_number Number of working thread (0 = nb machine core).
     */
-    Server(std::string address,
-           int32_t thread_number = std::thread::hardware_concurrency());
+    Server(std::string address, int32_t thread_number = 0);
 
     /*!
     ** Shutdown grpc server and completion queue.

@@ -8,7 +8,9 @@
 namespace Network
 {
   Server::Server(std::string address, int32_t thread_number)
-    : started_(false), thread_number_(thread_number), address_(address)
+    : started_(false),
+      thread_number_(thread_number ? thread_number : std::thread::hardware_concurrency()),
+      address_(address)
   {
   }
 
