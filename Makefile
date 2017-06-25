@@ -15,11 +15,16 @@ TEST_OUTPUT_PATH = /tmp/mykafka-test
 vpath %.proto $(PROTOS_PATH)
 
 PROTOS = $(PROTOS_PATH)/mykafka.proto
+
 SOURCES = \
 	$(SRC_PATH)/commitlog/Index.cc \
 	$(SRC_PATH)/commitlog/Segment.cc \
 	$(SRC_PATH)/commitlog/Partition.cc \
-	$(SRC_PATH)/commitlog/Utils.cc
+	$(SRC_PATH)/commitlog/Utils.cc \
+	$(SRC_PATH)/network/Server.cc \
+	$(SRC_PATH)/network/Service.cc \
+	$(SRC_PATH)/network/SendMessageService.cc
+
 HEADERS = $(SOURCES:.cc=.hh)
 
 CLIENT_SRC = $(SRC_PATH)/client.cc
@@ -28,19 +33,19 @@ GRPC_SRC = $(PROTOS:.proto=.grpc.pb.cc)
 PB_SRC = $(PROTOS:.proto=.pb.cc)
 
 OBJ = $(SOURCES:.cc=.o) $(GRPC_SRC:.grpc.pb.cc=.grpc.pb.o) $(PB_SRC:.pb.cc=.pb.o)
-CLIENT_OBJ = $(CLIENT_SRC:.cc=.o)
-SERVER_OBJ = $(SERVER_SRC:.cc=.o)
+CLIENT_OBJ = $(CLIENT_SRC:.cc=.o) $(OBJ)
+SERVER_OBJ = $(SERVER_SRC:.cc=.o) $(OBJ)
 
 CLIENT = mykafka-client
 SERVER = mykafka-server
 
 all: $(CLIENT) $(SERVER)
 
-$(CLIENT): system-check $(GRPC_SRC) $(PB_SRC) $(OBJ) $(CLIENT_OBJ) $(HEADERS)
-	$(CXX) $(OBJ) $(CLIENT_OBJ) $(LDFLAGS) -o $@
+$(CLIENT): system-check $(CLIENT_OBJ) $(HEADERS)
+	$(CXX) $(CLIENT_OBJ) $(LDFLAGS) -o $@
 
-$(SERVER): system-check $(GRPC_SRC) $(PB_SRC) $(OBJ) $(SERVER_OBJ) $(HEADERS)
-	$(CXX) $(OBJ) $(SERVER_OBJ) $(LDFLAGS) -o $@
+$(SERVER): system-check $(SERVER_OBJ) $(HEADERS)
+	$(CXX) $(SERVER_OBJ) $(LDFLAGS) -o $@
 
 Makefile.deps: $(GRPC_SRC) $(PB_SRC) $(SOURCES) $(HEADERS) $(CLIENT_SRC) $(SERVER_SRC)
 	$(CXX) $(CXXFLAGS) -MM $(SOURCES) $(CLIENT_SRC) $(SERVER_SRC) > Makefile.deps

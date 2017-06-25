@@ -18,17 +18,24 @@ message Error
   string msg = 2;
 }
 
-service Greeter
+message SendMessageRequest
 {
-  rpc SayHello (HelloRequest) returns (HelloReply) {}
+  string record = 1;
 }
 
-message HelloRequest
+message GetMessageRequest
 {
-  string name = 1;
+  int64 offset = 1;
 }
 
-message HelloReply
+message MessageResponse
 {
-  string message = 1;
+  Error error = 1;
+  int64 offset = 2;
+}
+
+service Broker
+{
+  rpc SendMessage(SendMessageRequest) returns (MessageResponse) {}
+  rpc GetMessage(GetMessageRequest) returns (MessageResponse) {}
 }

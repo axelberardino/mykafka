@@ -13,15 +13,32 @@ namespace CommitLog
   /*!
   ** @class Partition
   **
-  ** 4 byte CRC32 of the message
-  ** 1 byte "magic" identifier which is always 0.
-  ** 1 byte "attributes" which is always 0.
-  ** 4 byte key length, containing length K
-  ** K byte key
-  ** 4 byte payload length, containing length V
-  ** V byte payload
+  ** This class handle a partition. A partition is a folder
+  ** containing log files (for data) and their index (for fast
+  ** direct access).
   **
-  ** Size is: 4 + 1 + 1 + 4 + K + 4 + V = K + V + 14
+  ** For example, a partition "test", could be like that:
+  ** /tmp/path/test/
+  **   |_______ 00000000000000000000.index
+  **   |_______ 00000000000000000000.log
+  **   |_______ 00000000000000000215.index
+  **   |_______ 00000000000000000215.log
+  **   |_______ 00000000000000000633.index
+  **   |_______ 00000000000000000633.log
+  **   |_______ 00000000000000000837.index
+  **   |_______ 00000000000000000837.log
+  **
+  ** Simple example:
+  ** @code
+  **   const std::string msg = "Hello world";
+  **   int64_t offset = 0;
+  **   std::vector<char> payload(msg.begin(), msg.end());
+  **   Partition partition("/tmp/path/test", 4096, 0, 0);
+  **   partition.open();
+  **   partition.write(payload, offset);
+  **   partition.readAt(payload, 0);
+  **   partition.readAt(payload, offset);
+  ** @endcode
   */
   class Partition
   {

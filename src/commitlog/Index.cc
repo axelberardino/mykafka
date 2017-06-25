@@ -112,10 +112,10 @@ namespace CommitLog
   mykafka::Error
   Index::sync()
   {
-    if (syncfs(fd_) < 0)
-      return Utils::err(mykafka::Error::FILE_ERROR, "Can't file sync " + filename_ + "!");
     if (msync(addr_, position_, MS_SYNC) < 0)
       return Utils::err(mykafka::Error::FILE_ERROR, "Can't msync " + filename_ + "!");
+    if (syncfs(fd_) < 0)
+      return Utils::err(mykafka::Error::FILE_ERROR, "Can't file sync " + filename_ + "!");
 
     return Utils::err(mykafka::Error::OK);
   }
