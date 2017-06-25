@@ -30,9 +30,9 @@ SOURCES = \
 
 HEADERS = $(SOURCES:.cc=.hh)
 
-PRODUCER_SRC = $(SRC_PATH)/producer.cc
-CONSUMER_SRC = $(SRC_PATH)/consumer.cc
-SERVER_SRC = $(SRC_PATH)/server.cc
+PRODUCER_SRC = $(SRC_PATH)/main-producer.cc
+CONSUMER_SRC = $(SRC_PATH)/main-consumer.cc
+SERVER_SRC = $(SRC_PATH)/main-server.cc
 GRPC_SRC = $(PROTOS:.proto=.grpc.pb.cc)
 PB_SRC = $(PROTOS:.proto=.pb.cc)
 
