@@ -4,7 +4,7 @@ namespace Network
 {
   SendMessageService::SendMessageService(std::shared_ptr<grpc::Service> service,
                                          grpc::ServerCompletionQueue* cq)
-    : Service(service, cq), responder_(&ctx_)
+    : RpcService(service, cq), responder_(&ctx_)
   {
     auto async_service = static_cast<mykafka::Broker::AsyncService*>(service.get());
     async_service->RequestSendMessage(&ctx_, &request_, &responder_, cq, cq, this);

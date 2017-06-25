@@ -1,5 +1,5 @@
-#ifndef NETWORK_SERVICE_HH_
-# define NETWORK_SERVICE_HH_
+#ifndef NETWORK_RPCSERVICE_HH_
+# define NETWORK_RPCSERVICE_HH_
 
 # include <grpc++/grpc++.h>
 # include <grpc/support/log.h>
@@ -13,7 +13,7 @@ namespace Network
   **
   ** Abstract class use to handle rpc service.
   */
-  class Service
+  class RpcService
   {
   public:
     /*!
@@ -22,12 +22,12 @@ namespace Network
     ** @param service The rpc async service.
     ** @param cq The async completion queue.
     */
-    Service(std::shared_ptr<grpc::Service> service, grpc::ServerCompletionQueue* cq);
+    RpcService(std::shared_ptr<grpc::Service> service, grpc::ServerCompletionQueue* cq);
 
     /*!
     ** Destroy the service.
     */
-    virtual ~Service();
+    virtual ~RpcService();
 
     /*!
     ** Spawn a new Service instance to serve new clients.
@@ -52,4 +52,4 @@ namespace Network
   };
 } // Network
 
-#endif /* !NETWORK_SERVICE_HH_ */
+#endif /* !NETWORK_RPCSERVICE_HH_ */

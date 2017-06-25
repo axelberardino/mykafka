@@ -1,5 +1,5 @@
 #include "network/RpcServer.hh"
-#include "network/Service.hh"
+#include "network/RpcService.hh"
 
 #include <thread>
 #include <vector>
@@ -61,7 +61,7 @@ namespace Network
       // The return value of Next should always be checked. This return value
       // tells us whether there is any kind of event or cq_ is shutting down.
       if (cq_->Next(&tag, &ok) && ok)
-        static_cast<Service*>(tag)->proceed();
+        static_cast<RpcService*>(tag)->proceed();
     }
   }
 } // Network

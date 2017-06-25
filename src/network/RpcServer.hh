@@ -1,5 +1,5 @@
-#ifndef NETWORK_SERVER_HH_
-# define NETWORK_SERVER_HH_
+#ifndef NETWORK_RPCSERVER_HH_
+# define NETWORK_RPCSERVER_HH_
 
 # include <grpc++/grpc++.h>
 # include <grpc/support/log.h>
@@ -60,4 +60,4 @@ namespace Network
   };
 } // Network
 
-#endif /* !NETWORK_SERVER_HH_ */
+#endif /* !NETWORK_RPCSERVER_HH_ */

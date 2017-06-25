@@ -1,7 +1,7 @@
 #ifndef NETWORK_SENDMESSAGESERVICE_HH_
 # define NETWORK_SENDMESSAGESERVICE_HH_
 
-# include "network/Service.hh"
+# include "network/RpcService.hh"
 
 namespace Network
 {
@@ -10,7 +10,7 @@ namespace Network
   **
   ** Handle send messsage.
   */
-  class SendMessageService : public Service
+  class SendMessageService : public RpcService
   {
   public:
     /*!
