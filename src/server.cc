@@ -12,6 +12,8 @@ int main(int argc, char** argv)
   desc.add_options()
     ("help", "produce help message")
     ("nb-threads", po::value<int>()->default_value(0), "Set the number of thread (0 = use the core number)")
+    ("port", po::value<int>()->default_value(9000), "Set the port")
+    ("broker-id", po::value<int>()->default_value(0), "Set the broker-id")
     ;
 
   po::variables_map vm;
@@ -24,7 +26,8 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  Network::Server server("0.0.0.0:50051", vm["nb-threads"].as<int>());
+  Network::Server server("0.0.0.0:" + std::to_string(vm["port"].as<int>()),
+                         vm["nb-threads"].as<int>());
   server.run();
 
   return 0;
