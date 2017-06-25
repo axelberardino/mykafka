@@ -2,7 +2,8 @@ CXX = g++
 CXXFLAGS += -I/usr/local/include -I./protos/ -I./src/ -pthread -W -Wall -std=c++11
 LDFLAGS += -L/usr/local/lib `pkg-config --libs grpc++ grpc`       \
            -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed \
-           -lprotobuf -lpthread -ldl -lboost_system -lboost_thread -lboost_filesystem
+           -lprotobuf -lpthread -ldl -lboost_system -lboost_thread \
+           -lboost_filesystem -lboost_program_options
 PROTOC = protoc
 GRPC_CPP_PLUGIN = grpc_cpp_plugin
 GRPC_CPP_PLUGIN_PATH ?= `which $(GRPC_CPP_PLUGIN)`
@@ -22,34 +23,35 @@ SOURCES = \
 	$(SRC_PATH)/commitlog/Partition.cc \
 	$(SRC_PATH)/commitlog/Utils.cc \
 	$(SRC_PATH)/network/Server.cc \
+	$(SRC_PATH)/network/Client.cc \
 	$(SRC_PATH)/network/Service.cc \
 	$(SRC_PATH)/network/GetMessageService.cc \
 	$(SRC_PATH)/network/SendMessageService.cc
 
 HEADERS = $(SOURCES:.cc=.hh)
 
-CLIENT_SRC = $(SRC_PATH)/client.cc
+PRODUCER_SRC = $(SRC_PATH)/producer.cc
 SERVER_SRC = $(SRC_PATH)/server.cc
 GRPC_SRC = $(PROTOS:.proto=.grpc.pb.cc)
 PB_SRC = $(PROTOS:.proto=.pb.cc)
 
 OBJ = $(SOURCES:.cc=.o) $(GRPC_SRC:.grpc.pb.cc=.grpc.pb.o) $(PB_SRC:.pb.cc=.pb.o)
-CLIENT_OBJ = $(CLIENT_SRC:.cc=.o) $(OBJ)
-SERVER_OBJ = $(SERVER_SRC:.cc=.o) $(OBJ)
+PRODUCER_OBJ =  $(OBJ) $(PRODUCER_SRC:.cc=.o)
+SERVER_OBJ = $(OBJ) $(SERVER_SRC:.cc=.o)
 
-CLIENT = mykafka-client
+PRODUCER = mykafka-producer
 SERVER = mykafka-server
 
-all: $(CLIENT) $(SERVER)
+all: $(PRODUCER) $(SERVER)
 
-$(CLIENT): system-check $(CLIENT_OBJ) $(HEADERS)
-	$(CXX) $(CLIENT_OBJ) $(LDFLAGS) -o $@
+$(PRODUCER): system-check $(PRODUCER_OBJ) $(HEADERS)
+	$(CXX) $(PRODUCER_OBJ) $(LDFLAGS) -o $@
 
 $(SERVER): system-check $(SERVER_OBJ) $(HEADERS)
 	$(CXX) $(SERVER_OBJ) $(LDFLAGS) -o $@
 
-Makefile.deps: $(GRPC_SRC) $(PB_SRC) $(SOURCES) $(HEADERS) $(CLIENT_SRC) $(SERVER_SRC)
-	$(CXX) $(CXXFLAGS) -MM $(SOURCES) $(CLIENT_SRC) $(SERVER_SRC) > Makefile.deps
+Makefile.deps: $(GRPC_SRC) $(PB_SRC) $(SOURCES) $(HEADERS) $(PRODUCER_SRC) $(SERVER_SRC)
+	$(CXX) $(CXXFLAGS) -MM $(SOURCES) $(PRODUCER_SRC) $(SERVER_SRC) > Makefile.deps
 
 .PRECIOUS: %.o
 %.o: %.cc
@@ -92,7 +94,7 @@ clean:
 	find . -name "*.o" | xargs rm -f
 
 distclean: clean
-	rm -f $(CLIENT) $(SERVER) ./test/*
+	rm -f $(PRODUCER) $(SERVER) ./test/*
 
 t: partition-test
 

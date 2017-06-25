@@ -13,13 +13,14 @@ namespace Network
   class Server
   {
   public:
-    Server(const std::string& address);
+    Server(std::string address);
     ~Server();
     void run();
     void handleRpcs();
 
   private:
-    const std::string& address_;
+    bool started_;
+    const std::string address_;
     std::unique_ptr<grpc::ServerCompletionQueue> cq_;
     mykafka::Broker::AsyncService service_;
     std::unique_ptr<grpc::Server> server_;

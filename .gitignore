@@ -5,4 +5,6 @@ grpc
 *.deps
 mykafka-client
 mykafka-server
+mykafka-producer
+mykafka-consumer
 test
