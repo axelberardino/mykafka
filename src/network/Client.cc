@@ -6,19 +6,18 @@ namespace Network
 {
   Client::Client(std::string address, int64_t client_connection_timeout)
     : address_(address),
-      client_connection_timeout_(),
+      client_connection_timeout_(client_connection_timeout),
+      reconnect_timeout_(60000 /* 1 min */),
       channel_(grpc::CreateChannel(address, grpc::InsecureChannelCredentials())),
       stub_(mykafka::Broker::NewStub(channel_))
   {
   }
 
-  void
+  bool
   Client::reconnect()
   {
-    // Try to reconnect
-    channel_->GetState(true);
-    channel_ = grpc::CreateChannel(address_, grpc::InsecureChannelCredentials());
-    stub_ = mykafka::Broker::NewStub(channel_);
+    return channel_->WaitForConnected(std::chrono::system_clock::now() +
+                                      std::chrono::milliseconds(reconnect_timeout_));
   }
 
   grpc::Status
@@ -33,7 +32,9 @@ namespace Network
     grpc::Status status = stub_->SendMessage(&context, request, &response);
     if (!status.ok())
     {
-      //reconnect(); // Reconnect ?
+      std::cout << "Connection lost, try to reconnect..." << std::endl;
+      const bool res = reconnect();
+      std::cout << "Reconnect " << (res ? "succeed!" : "failed!") << std::endl;
     }
 
     return status;

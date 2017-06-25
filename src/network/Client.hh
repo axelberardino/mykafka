@@ -14,13 +14,14 @@ namespace Network
   {
   public:
     Client(std::string address, int64_t client_connection_timeout = 200 /* ms */);
-    void reconnect();
+    bool reconnect();
     grpc::Status sendMessage(mykafka::SendMessageRequest request,
                              mykafka::SendMessageResponse& response);
 
   private:
     const std::string address_;
     int64_t client_connection_timeout_;
+    int64_t reconnect_timeout_;
     std::shared_ptr<grpc::Channel> channel_;
     std::unique_ptr<mykafka::Broker::Stub> stub_;
   };
