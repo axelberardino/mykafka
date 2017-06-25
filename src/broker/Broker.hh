@@ -36,9 +36,14 @@ namespace Broker
   class Broker
   {
   public:
-    Broker(); // Give him a server (or a false one) !
+    Broker();
     ~Broker();
-    void run();
+
+    void getMessage(mykafka::GetMessageRequest& request,
+                    mykafka::GetMessageResponse& response);
+
+    void sendMessage(mykafka::SendMessageRequest& request,
+                     mykafka::SendMessageResponse& response);
 
   private:
     struct Info
