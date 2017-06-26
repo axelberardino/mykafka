@@ -2,6 +2,7 @@
 # define BROKER_BROKER_HH_
 
 # include "commitlog/Partition.hh"
+# include "utils/ConfigManager.hh"
 
 # include <map>
 # include <vector>
@@ -50,23 +51,17 @@ namespace Broker
 
   private:
     const std::string base_path_;
-    struct Info
-    {
-      // int64_t first_offset; // maybe directly from partition
-      // int64_t next_offset; // maybe directly from partition
-      int64_t max_segment_size;
-      int64_t max_partition_size;
-      int64_t segment_ttl;
-      int64_t reader_offset;
-      int64_t commit_offset;
 
+    struct PartitionInfo
+    {
       int32_t leader_id;
       int32_t preferred_leader_id;
       std::vector<std::string> replicas;
       std::vector<std::string> isr;
       std::shared_ptr<CommitLog::Partition> partition;
     };
-    std::map<std::string, std::map<int32_t, Info> > topics_;
+    std::map<std::string, std::map<int32_t, PartitionInfo> > topics_;
+    Utils::ConfigManager config_;
   };
 } // Broker
 
