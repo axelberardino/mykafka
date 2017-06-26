@@ -154,6 +154,7 @@ namespace CommitLog
     mykafka::Error findSegment(Segment*& found_segment, int64_t search_offset);
 
   private:
+    bool cancel_;
     int64_t max_segment_size_;
     int64_t max_partition_size_;
     int64_t segment_ttl_;

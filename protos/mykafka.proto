@@ -13,7 +13,8 @@ message Error
     INDEX_ERROR = 4;
     LOG_ERROR = 5;
     PARTITION_ERROR = 6;
-    NOT_FOUND = 7;
+    TOPIC_ERROR = 7;
+    NOT_FOUND = 8;
   }
   ErrCode code = 1;
   string msg = 2;
@@ -47,8 +48,21 @@ message GetMessageResponse
   bytes payload = 2;
 }
 
+message TopicPartitionRequest
+{
+  string topic = 1;
+  int32 partition = 2;
+  int64 max_segment_size = 3;
+  int64 max_partition_size = 4;
+  int64 segment_ttl = 5;
+}
+
 service Broker
 {
   rpc SendMessage(SendMessageRequest) returns (SendMessageResponse) {}
   rpc GetMessage(GetMessageRequest) returns (GetMessageResponse) {}
+
+  rpc CreatePartition(TopicPartitionRequest) returns (Error) {}
+  rpc DeletePartition(TopicPartitionRequest) returns (Error) {}
+  rpc DeleteTopic(TopicPartitionRequest) returns (Error) {}
 }

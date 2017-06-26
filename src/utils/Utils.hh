@@ -37,6 +37,32 @@ namespace Utils
   */
   mykafka::Error err(mykafka::Error_ErrCode code);
 
+
+  /*!
+  ** Convert a std::vector int a string for pretty printing.
+  **
+  ** @param vec The vector to display.
+  **
+  ** @return A formatted string.
+  */
+  template <typename T>
+  std::string vecToStr(const std::vector<T>& vec)
+  {
+    bool first = true;
+    std::ostringstream buff;
+    buff << "[";
+    for (auto& elt : vec)
+    {
+      if (first)
+        first = false;
+      else
+        buff << ",";
+      buff << elt;
+    }
+
+    return buff.str();
+  }
+
   /*!
   ** Generic hash template for STL collection.
   **

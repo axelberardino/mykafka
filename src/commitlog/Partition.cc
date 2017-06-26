@@ -36,9 +36,9 @@ namespace CommitLog
 
   Partition::Partition(const std::string& path, int64_t max_segment_size,
                        int64_t max_partition_size, int64_t segment_ttl)
-    : max_segment_size_(max_segment_size), max_partition_size_(max_partition_size),
-      segment_ttl_(segment_ttl), physical_size_(0),
-      active_segment_(0), path_(path), name_(), segments_()
+    : cancel_(false), max_segment_size_(max_segment_size),
+      max_partition_size_(max_partition_size), segment_ttl_(segment_ttl),
+      physical_size_(0), active_segment_(0), path_(path), name_(), segments_()
   {
   }
 
@@ -101,6 +101,8 @@ namespace CommitLog
   Partition::write(const std::vector<char>& payload, int64_t& offset)
   {
     boost::lock_guard<boost::shared_mutex> lock(mutex_);
+    if (cancel_)
+      return Utils::err(mykafka::Error::PARTITION_ERROR, "Partition is closed");
 
     assert(active_segment_);
     if ((*active_segment_).isFull())
@@ -132,6 +134,8 @@ namespace CommitLog
   Partition::readAt(std::vector<char>& payload, int64_t offset)
   {
     boost::lock_guard<boost::shared_mutex> lock(mutex_);
+    if (cancel_)
+      return Utils::err(mykafka::Error::PARTITION_ERROR, "Partition is closed");
 
     Segment* found_segment = 0;
     auto res = findSegment(found_segment, offset);
@@ -152,6 +156,9 @@ namespace CommitLog
   Partition::newestOffset() const
   {
     boost::shared_lock<boost::shared_mutex> lock(mutex_);
+    if (cancel_)
+      return -1;
+
     assert(active_segment_);
     return (*active_segment_).nextOffset();
   }
@@ -160,6 +167,9 @@ namespace CommitLog
   Partition::oldestOffset() const
   {
     boost::shared_lock<boost::shared_mutex> lock(mutex_);
+    if (cancel_)
+      return -1;
+
     return segments_.front()->baseOffset();
   }
 
@@ -181,7 +191,10 @@ namespace CommitLog
   Partition::close()
   {
     boost::lock_guard<boost::shared_mutex> lock(mutex_);
+    if (cancel_)
+      return Utils::err(mykafka::Error::PARTITION_ERROR, "Partition is closed");
 
+    cancel_ = true;
     active_segment_ = 0;
     physical_size_ = 0;
     for (auto segment : segments_)

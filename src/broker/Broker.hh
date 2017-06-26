@@ -4,7 +4,7 @@
 # include "commitlog/Partition.hh"
 # include "utils/ConfigManager.hh"
 
-# include <map>
+# include <unordered_map>
 # include <vector>
 # include <inttypes.h>
 
@@ -40,16 +40,66 @@ namespace Broker
     Broker(const std::string& base_path);
     ~Broker();
 
+    /*!
+    ** Load all config files, then all partitions
+    ** present in the config files.
+    **
+    ** @return Error code 0 if no error, or a detailed error.
+    */
+    mykafka::Error load();
+
+    /*!
+    ** Create a partition on the given topic.
+    ** @warning Will failed if the partition already exists!
+    **
+    ** @param request The client request.
+    **
+    ** @return Error code 0 if no error, or a detailed error.
+    */
+    mykafka::Error createPartition(mykafka::TopicPartitionRequest& request);
+
+    /*!
+    ** Create a partition on the given topic.
+    ** @warning Will failed if the partition don't exists!
+    **
+    ** @param request The client request.
+    **
+    ** @return Error code 0 if no error, or a detailed error.
+    */
+    mykafka::Error deletePartition(mykafka::TopicPartitionRequest& request);
+
+    /*!
+    ** Delete an entier topic and all its partition.
+    **
+    ** @param request The client request.
+    **
+    ** @return Error code 0 if no error, or a detailed error.
+    */
+    mykafka::Error deleteTopic(mykafka::TopicPartitionRequest& request);
+
+    void getTopicInfo();
+
+    /*!
+    ** Get a message from the selected topic/partition.
+    ** If topic/partition not exists, an error will be
+    ** filled into the response.
+    **
+    ** @param request The client request.
+    ** @param response The response to give to the client.
+    */
     void getMessage(mykafka::GetMessageRequest& request,
                     mykafka::GetMessageResponse& response);
 
+    /*!
+    ** Write a message to the selected topic/partition.
+    ** If topic/partition not exists, an error will be
+    ** filled into the response.
+    **
+    ** @param request The client request.
+    ** @param response The response to give to the client.
+    */
     void sendMessage(mykafka::SendMessageRequest& request,
                      mykafka::SendMessageResponse& response);
-
-    mykafka::Error load();
-    mykafka::Error createTopic();
-    mykafka::Error deleteTopic();
-    mykafka::Error getTopicInfo();
 
     /*!
     ** Close all partition and config files.
@@ -59,6 +109,20 @@ namespace Broker
     mykafka::Error close();
 
     /*!
+    ** Get the number of topics hold.
+    **
+    ** @return The number of topics.
+    */
+    int32_t nbTopics() const;
+
+    /*!
+    ** Get the numer of partitions hold.
+    **
+    ** @return The number of partitions.
+    */
+    int32_t nbPartitions() const;
+
+    /*!
     ** Dump the entire broker info into a stream.
     **
     ** @param out The output stream.
@@ -66,8 +130,23 @@ namespace Broker
     void dump(std::ostream& out) const;
 
   private:
-    const std::string base_path_;
+    /*!
+    ** Create a new partition, and add it to the topics list.
+    **
+    ** @param path The physical path of the partition.
+    ** @param topic The topic name.
+    ** @param partition_id The partition number.
+    ** @param max_segment_size Max size per segment.
+    ** @param max_partition_size Max total partition size allowed.
+    ** @param segment_ttl Life duration of a segment.
+    **
+    ** @return Error code 0 if no error, or a detailed error.
+    */
+    mykafka::Error createAndAddNewPartition(const std::string& path,  const std::string& topic,
+                                            int32_t partition_id, int64_t max_segment_size,
+                                            int64_t max_partition_size, int64_t segment_ttl);
 
+  private:
     struct PartitionInfo
     {
       int32_t leader_id;
@@ -76,7 +155,14 @@ namespace Broker
       std::vector<std::string> isr;
       std::shared_ptr<CommitLog::Partition> partition;
     };
-    std::map<std::string, std::map<int32_t, PartitionInfo> > topics_;
+    typedef std::unordered_map<Utils::ConfigManager::TopicPartition,
+                               PartitionInfo,
+                               Utils::Hash<Utils::ConfigManager::TopicPartition> > topics_type;
+    typedef topics_type::iterator iterator;
+
+  private:
+    const std::string base_path_;
+    topics_type topics_;
     Utils::ConfigManager config_manager_;
   };
 } // Broker

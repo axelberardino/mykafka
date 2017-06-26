@@ -4,7 +4,7 @@
 #include <boost/test/included/unit_test.hpp>
 #include <boost/filesystem.hpp>
 
-#include "utils/ConfigManager.hh"
+#include "broker/Broker.hh"
 #include "utils/Utils.hh"
 #include "boost_test_helper.hh"
 
@@ -26,6 +26,13 @@ namespace
 
 BOOST_GLOBAL_FIXTURE(Setup);
 
-BOOST_AUTO_TEST_CASE(test_create_conf)
+BOOST_AUTO_TEST_CASE(test_nothing_to_load)
 {
+  Broker::Broker broker(tmp_path);
+
+  auto res = broker.load();
+  BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
+
+  BOOST_CHECK_EQUAL(broker.nbTopics(), 0);
+  BOOST_CHECK_EQUAL(broker.nbPartitions(), 0);
 }
