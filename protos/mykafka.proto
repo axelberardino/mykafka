@@ -23,9 +23,10 @@ message Error
 message SendMessageRequest
 {
   int32 producer_id = 1;
-  string topic = 2;
-  int32 partition = 3;
-  bytes payload = 4;
+  string group_id = 2;
+  string topic = 3;
+  int32 partition = 4;
+  bytes payload = 5;
 }
 
 message SendMessageResponse
@@ -37,9 +38,10 @@ message SendMessageResponse
 message GetMessageRequest
 {
   int32 consumer_id = 1;
-  string topic = 2;
-  int32 partition = 3;
-  int64 offset = 4;
+  string group_id = 2;
+  string topic = 3;
+  int32 partition = 4;
+  int64 offset = 5;
 }
 
 message GetMessageResponse

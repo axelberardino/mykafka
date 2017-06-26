@@ -180,6 +180,36 @@ namespace Utils
   }
 
   mykafka::Error
+  ConfigManager::updateReaderOffset(const TopicPartition& key, int64_t reader_offset)
+  {
+    auto found = configs_.find(key);
+    if (found == configs_.cend())
+      return Utils::err(mykafka::Error::NOT_FOUND, "Can't find info for"
+                        " key " + key.toString() + "!");
+
+    *reinterpret_cast<int64_t*>
+      (reinterpret_cast<char*>(found->second.addr_) + 24) = reader_offset;
+    found->second.info.reader_offset = reader_offset;
+
+    return Utils::err(mykafka::Error::OK);
+  }
+
+  mykafka::Error
+  ConfigManager::updateCommitOffset(const TopicPartition& key, int64_t commit_offset)
+  {
+    auto found = configs_.find(key);
+    if (found == configs_.cend())
+      return Utils::err(mykafka::Error::NOT_FOUND, "Can't find info for"
+                        " key " + key.toString() + "!");
+
+    *reinterpret_cast<int64_t*>
+      (reinterpret_cast<char*>(found->second.addr_) + 32) = commit_offset;
+    found->second.info.commit_offset = commit_offset;
+
+    return Utils::err(mykafka::Error::OK);
+  }
+
+  mykafka::Error
   ConfigManager::remove(const TopicPartition& key)
   {
     auto found = configs_.find(key);

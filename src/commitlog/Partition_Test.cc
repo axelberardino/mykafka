@@ -253,9 +253,9 @@ BOOST_AUTO_TEST_CASE(test_partition_with_ttl)
   const std::string dir = tmp_path + "/test-ttl";
   writeAndReadPartition(dir, 50,
                         max_segment_size * 10,
-                        big_partition_size, false, 1 /* ttl = 1 sec */);
+                        big_partition_size, false, 0);
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+  std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 
   writeAndReadPartition(dir, 50,
                         max_segment_size * 10,

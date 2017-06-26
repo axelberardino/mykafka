@@ -158,6 +158,26 @@ namespace Utils
     mykafka::Error update(const TopicPartition& key, const RawInfo& info);
 
     /*!
+    ** Update reader_offset.
+    **
+    ** @param key The topic/partition key.
+    ** @param reader_offset Update the reader offset.
+    **
+    ** @return Error code 0 if no error, or a detailed error.
+    */
+    mykafka::Error updateReaderOffset(const TopicPartition& key, int64_t reader_offset);
+
+    /*!
+    ** Update reader_offset.
+    **
+    ** @param key The topic/partition key.
+    ** @param commit_offset Update the reader offset.
+    **
+    ** @return Error code 0 if no error, or a detailed error.
+    */
+    mykafka::Error updateCommitOffset(const TopicPartition& key, int64_t commit_offset);
+
+    /*!
     ** Close the config file, erase it from topics list
     ** and physically remove it from disk.
     **

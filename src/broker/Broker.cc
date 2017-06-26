@@ -151,8 +151,16 @@ namespace Broker
   Broker::sendMessage(mykafka::SendMessageRequest& request,
                       mykafka::SendMessageResponse& response)
   {
-    auto partition = topics_[{"default", 0}].partition;
-    assert(partition);
+    const std::string strkey = request.topic() + "-" + std::to_string(request.partition());
+    const Utils::ConfigManager::TopicPartition key{request.topic(), request.partition()};
+    auto error = response.error();
+    auto found = topics_.find(key);
+    if (found == topics_.cend())
+    {
+      error.set_code(mykafka::Error::TOPIC_ERROR);
+      error.set_msg("The topic " + strkey + " don't exists!");
+      return;
+    }
 
     std::cout << "Send to topic " << request.topic() << "-"
               << request.partition() << ": "
@@ -160,11 +168,17 @@ namespace Broker
 
     std::vector<char> payload(request.payload().begin(), request.payload().end());
     int64_t offset = 0;
-    auto res = partition->write(payload, offset);
-    auto error = response.error();
+    auto res = found->second.partition->write(payload, offset);
     error.set_code(res.code());
     error.set_msg(res.msg());
     response.set_offset(offset);
+
+    if (res.code() != mykafka::Error::OK)
+      return;
+
+    res = config_manager_.updateReaderOffset(key, offset);
+    error.set_code(res.code());
+    error.set_msg(res.msg());
   }
 
   mykafka::Error
