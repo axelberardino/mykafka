@@ -194,18 +194,70 @@ BOOST_FIXTURE_TEST_CASE(test_delete_topic, Setup)
 
 BOOST_FIXTURE_TEST_CASE(test_write, Setup)
 {
-  create_one_partition("test_write", 0);
+  const std::string topic = "test_readwrite";
+  const int32_t partition = 0;
+  create_one_partition(topic, partition);
 
-  
+  mykafka::SendMessageRequest request;
+  request.set_producer_id(0);
+  request.set_group_id("");
+  request.set_topic(topic);
+  request.set_partition(partition);
+  request.set_payload("some data");
+  mykafka::SendMessageResponse response;
+
+  Broker::Broker broker(tmp_path);
+  auto res = broker.load();
+  BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
+
+  broker.sendMessage(request, response);
+  res = response.error();
+  BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
+  BOOST_CHECK_EQUAL(response.offset(), 0);
+
+  broker.sendMessage(request, response);
+  res = response.error();
+  BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
+  BOOST_CHECK_EQUAL(response.offset(), 1);
 }
 
 BOOST_AUTO_TEST_CASE(test_read)
 {
+  const std::string topic = "test_readwrite";
+  const int32_t partition = 0;
+
+  mykafka::GetMessageRequest request;
+  request.set_consumer_id(0);
+  request.set_group_id("");
+  request.set_topic(topic);
+  request.set_partition(partition);
+  mykafka::GetMessageResponse response;
+
+  Broker::Broker broker(tmp_path);
+  auto res = broker.load();
+  BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
+
+  request.set_offset(0);
+  broker.getMessage(request, response);
+  res = response.error();
+  BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
+  BOOST_CHECK_EQUAL(response.payload(), "some data");
+
+  request.set_offset(1);
+  broker.getMessage(request, response);
+  res = response.error();
+  BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
+  BOOST_CHECK_EQUAL(response.payload(), "some data");
+
+  request.set_offset(2);
+  broker.getMessage(request, response);
+  res = response.error();
+  BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::NO_MESSAGE, res.msg());
+  BOOST_CHECK_EQUAL(response.payload(), "some data");
 }
 
+// get offset
 
-// test read, check commit offset, read_offset, next_offset
-// test write
 // test read, write en //
 
 // add topic while read/write

@@ -56,7 +56,6 @@ namespace Utils
       int64_t max_segment_size;
       int64_t max_partition_size;
       int64_t segment_ttl;
-      int64_t reader_offset;
       int64_t commit_offset;
     } __attribute__((packed));
 
@@ -156,16 +155,6 @@ namespace Utils
     ** @return Error code 0 if no error, or a detailed error.
     */
     mykafka::Error update(const TopicPartition& key, const RawInfo& info);
-
-    /*!
-    ** Update reader_offset.
-    **
-    ** @param key The topic/partition key.
-    ** @param reader_offset Update the reader offset.
-    **
-    ** @return Error code 0 if no error, or a detailed error.
-    */
-    mykafka::Error updateReaderOffset(const TopicPartition& key, int64_t reader_offset);
 
     /*!
     ** Update reader_offset.

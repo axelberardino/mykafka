@@ -15,6 +15,7 @@ message Error
     PARTITION_ERROR = 6;
     TOPIC_ERROR = 7;
     NOT_FOUND = 8;
+    NO_MESSAGE = 9;
   }
   ErrCode code = 1;
   string msg = 2;

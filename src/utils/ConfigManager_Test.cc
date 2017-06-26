@@ -46,7 +46,6 @@ BOOST_AUTO_TEST_CASE(test_read_conf)
   BOOST_CHECK_EQUAL(info.max_segment_size, 1);
   BOOST_CHECK_EQUAL(info.max_partition_size, 2);
   BOOST_CHECK_EQUAL(info.segment_ttl, 3);
-  BOOST_CHECK_EQUAL(info.reader_offset, 0);
   BOOST_CHECK_EQUAL(info.commit_offset, 0);
   config.dump(std::cout);
   res = config.close();
@@ -88,13 +87,11 @@ BOOST_FIXTURE_TEST_CASE(test_create_read_update_read, Setup)
   BOOST_CHECK_EQUAL(info.max_segment_size, 1);
   BOOST_CHECK_EQUAL(info.max_partition_size, 2);
   BOOST_CHECK_EQUAL(info.segment_ttl, 3);
-  BOOST_CHECK_EQUAL(info.reader_offset, 0);
   BOOST_CHECK_EQUAL(info.commit_offset, 0);
 
   info.max_segment_size = 123;
   info.max_partition_size = 456;
   info.segment_ttl = 789;
-  info.reader_offset = -1;
   info.commit_offset = -1;
   res = config.update({"update", 42}, info);
   BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
@@ -104,7 +101,6 @@ BOOST_FIXTURE_TEST_CASE(test_create_read_update_read, Setup)
   BOOST_CHECK_EQUAL(info.max_segment_size, 123);
   BOOST_CHECK_EQUAL(info.max_partition_size, 456);
   BOOST_CHECK_EQUAL(info.segment_ttl, 789);
-  BOOST_CHECK_EQUAL(info.reader_offset, -1);
   BOOST_CHECK_EQUAL(info.commit_offset, -1);
 
   res = config.close();
@@ -131,37 +127,6 @@ BOOST_AUTO_TEST_CASE(test_remove)
   BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
 }
 
-BOOST_FIXTURE_TEST_CASE(test_update_reader_offset, Setup)
-{
-  Utils::ConfigManager config(tmp_path);
-  Utils::ConfigManager::RawInfo info;
-
-  auto res = config.create({"update_reader_offset", 0}, 1, 2, 3);
-  BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
-
-  res = config.get({"update_reader_offset", 0}, info);
-  BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
-  BOOST_CHECK_EQUAL(info.max_segment_size, 1);
-  BOOST_CHECK_EQUAL(info.max_partition_size, 2);
-  BOOST_CHECK_EQUAL(info.segment_ttl, 3);
-  BOOST_CHECK_EQUAL(info.reader_offset, 0);
-  BOOST_CHECK_EQUAL(info.commit_offset, 0);
-
-  res = config.updateReaderOffset({"update_reader_offset", 0}, 375);
-  BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
-
-  res = config.get({"update_reader_offset", 0}, info);
-  BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
-  BOOST_CHECK_EQUAL(info.max_segment_size, 1);
-  BOOST_CHECK_EQUAL(info.max_partition_size, 2);
-  BOOST_CHECK_EQUAL(info.segment_ttl, 3);
-  BOOST_CHECK_EQUAL(info.reader_offset, 375);
-  BOOST_CHECK_EQUAL(info.commit_offset, 0);
-
-  res = config.close();
-  BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
-}
-
 BOOST_FIXTURE_TEST_CASE(test_update_commit_offset, Setup)
 {
   Utils::ConfigManager config(tmp_path);
@@ -175,7 +140,6 @@ BOOST_FIXTURE_TEST_CASE(test_update_commit_offset, Setup)
   BOOST_CHECK_EQUAL(info.max_segment_size, 1);
   BOOST_CHECK_EQUAL(info.max_partition_size, 2);
   BOOST_CHECK_EQUAL(info.segment_ttl, 3);
-  BOOST_CHECK_EQUAL(info.reader_offset, 0);
   BOOST_CHECK_EQUAL(info.commit_offset, 0);
 
   res = config.updateCommitOffset({"update_commit_offset", 0}, 713);
@@ -186,7 +150,6 @@ BOOST_FIXTURE_TEST_CASE(test_update_commit_offset, Setup)
   BOOST_CHECK_EQUAL(info.max_segment_size, 1);
   BOOST_CHECK_EQUAL(info.max_partition_size, 2);
   BOOST_CHECK_EQUAL(info.segment_ttl, 3);
-  BOOST_CHECK_EQUAL(info.reader_offset, 0);
   BOOST_CHECK_EQUAL(info.commit_offset, 713);
 
   res = config.close();

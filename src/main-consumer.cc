@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <inttypes.h>
+#include <thread>
 
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/parsers.hpp>
@@ -57,12 +58,23 @@ int main(int argc, char** argv)
     else
       std::cout << res.error_code() << ": " << res.error_message() << std::endl;
 
-    if (response.error().code() != mykafka::Error::OK)
+    switch (response.error().code())
     {
-      std::cout << response.error().code() << ": "
-                << response.error().msg() << std::endl;
-      stop = true;
-    }
+      case mykafka::Error::OK:
+        break;
+      case mykafka::Error::NO_MESSAGE:
+        {
+          std::cout << "No message to fetch, waiting 2 sec..." << std::endl;
+          std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+        }
+        break;
+      default:
+        {
+          std::cout << response.error().code() << ": "
+                    << response.error().msg() << std::endl;
+          stop = true;
+        }
+    };
     ++offset;
     if (offset >= nb_offset)
       stop = true;

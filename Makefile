@@ -118,7 +118,7 @@ clean:
 distclean: clean
 	rm -f $(PRODUCER) $(CONSUMER) $(SERVER) ./test/*
 
-t: broker-test
+t: all broker-test
 
 PROTOC_CMD = which $(PROTOC)
 PROTOC_CHECK_CMD = $(PROTOC) --version | grep -q libprotoc.3

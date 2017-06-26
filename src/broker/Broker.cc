@@ -133,17 +133,37 @@ namespace Broker
   Broker::getMessage(mykafka::GetMessageRequest& request,
                      mykafka::GetMessageResponse& response)
   {
-    auto partition = topics_[{"default", 0}].partition;
-    assert(partition);
+    const std::string strkey = request.topic() + "-" + std::to_string(request.partition());
+    const Utils::ConfigManager::TopicPartition key{request.topic(), request.partition()};
+    auto error = response.mutable_error();
+    auto found = topics_.find(key);
+    if (found == topics_.cend())
+    {
+      error->set_code(mykafka::Error::TOPIC_ERROR);
+      error->set_msg("The topic " + strkey + " don't exists!");
+      return;
+    }
 
-    std::cout << "Get message from topic " << request.topic()
-              << " at offset: " << request.offset() << std::endl;
+    Utils::ConfigManager::RawInfo info;
+    auto res = config_manager_.get(key, info);
+    if (res.code() != mykafka::Error::OK)
+    {
+      error->set_code(res.code());
+      error->set_msg(res.msg());
+      return;
+    }
+
+    if (request.offset() > info.commit_offset)
+    {
+      error->set_code(mykafka::Error::NO_MESSAGE);
+      error->set_msg("No more messages available!");
+      return;
+    }
 
     std::vector<char> payload;
-    auto res = partition->readAt(payload, request.offset());
-    auto error = response.error();
-    error.set_code(res.code());
-    error.set_msg(res.msg());
+    res = found->second.partition->readAt(payload, request.offset());
+    error->set_code(res.code());
+    error->set_msg(res.msg());
     response.set_payload(std::string(payload.begin(), payload.end()));
   }
 
@@ -153,32 +173,28 @@ namespace Broker
   {
     const std::string strkey = request.topic() + "-" + std::to_string(request.partition());
     const Utils::ConfigManager::TopicPartition key{request.topic(), request.partition()};
-    auto error = response.error();
+    auto error = response.mutable_error();
     auto found = topics_.find(key);
     if (found == topics_.cend())
     {
-      error.set_code(mykafka::Error::TOPIC_ERROR);
-      error.set_msg("The topic " + strkey + " don't exists!");
+      error->set_code(mykafka::Error::TOPIC_ERROR);
+      error->set_msg("The topic " + strkey + " don't exists!");
       return;
     }
-
-    std::cout << "Send to topic " << request.topic() << "-"
-              << request.partition() << ": "
-              << request.payload() << std::endl;
 
     std::vector<char> payload(request.payload().begin(), request.payload().end());
     int64_t offset = 0;
     auto res = found->second.partition->write(payload, offset);
-    error.set_code(res.code());
-    error.set_msg(res.msg());
-    response.set_offset(offset);
-
+    error->set_code(res.code());
+    error->set_msg(res.msg());
     if (res.code() != mykafka::Error::OK)
       return;
 
-    res = config_manager_.updateReaderOffset(key, offset);
-    error.set_code(res.code());
-    error.set_msg(res.msg());
+    res = config_manager_.updateCommitOffset(key, offset);
+    error->set_code(res.code());
+    error->set_msg(res.msg());
+
+    response.set_offset(offset);
   }
 
   mykafka::Error
