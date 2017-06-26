@@ -1,5 +1,5 @@
 #include "broker/Broker.hh"
-#include "commitlog/Utils.hh"
+#include "utils/Utils.hh"
 
 #include <memory>
 #include <cassert>
@@ -31,7 +31,7 @@ namespace Broker
 
     topics_["default"][0].partition = partition;
 
-    return CommitLog::Utils::err(mykafka::Error::OK);
+    return Utils::err(mykafka::Error::OK);
   }
 
   bool

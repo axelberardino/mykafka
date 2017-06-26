@@ -1,5 +1,5 @@
 #include "commitlog/Index.hh"
-#include "commitlog/Utils.hh"
+#include "utils/Utils.hh"
 
 #include <unistd.h>
 #include <sys/types.h>

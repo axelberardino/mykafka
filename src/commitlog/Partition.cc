@@ -1,5 +1,5 @@
 #include "commitlog/Partition.hh"
-#include "commitlog/Utils.hh"
+#include "utils/Utils.hh"
 
 #include <boost/filesystem.hpp>
 #include <boost/range/iterator_range.hpp>

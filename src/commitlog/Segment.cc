@@ -1,6 +1,6 @@
 #include "commitlog/Segment.hh"
 #include "commitlog/Index.hh"
-#include "commitlog/Utils.hh"
+#include "utils/Utils.hh"
 
 #include <linux/limits.h>
 #include <unistd.h>
