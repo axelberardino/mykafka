@@ -4,7 +4,6 @@
 # include <inttypes.h>
 # include "mykafka.pb.h"
 
-
 namespace Utils
 {
   /*!
@@ -37,6 +36,22 @@ namespace Utils
   ** @return A custom error.
   */
   mykafka::Error err(mykafka::Error_ErrCode code);
+
+  /*!
+  ** Generic hash template for STL collection.
+  **
+  ** @param key Key to hash.
+  **
+  ** @return Hash code.
+  */
+  template <typename T>
+  struct Hash
+  {
+    std::size_t operator()(const T& key) const
+    {
+      return key.hash_value();
+    }
+  };
 }
 
 #endif /* !UTILS_UTILS_HH_ */

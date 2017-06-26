@@ -32,7 +32,7 @@ namespace CommitLog
       return Utils::err(mykafka::Error::FILE_ERROR, "Can't open index " + filename_ + "!");
 
     struct stat buf;
-    if (fstat(fd_, &buf) < 0)
+    if (::fstat(fd_, &buf) < 0)
     {
       if (::close(fd_) < 0)
         return Utils::err(mykafka::Error::FILE_ERROR,
@@ -42,7 +42,7 @@ namespace CommitLog
 
     position_ = buf.st_size;
     const int64_t rounded_size = Utils::roundDownToMultiple(size_, ENTRY_WIDTH);
-    if (ftruncate(fd_, rounded_size) < 0)
+    if (::ftruncate(fd_, rounded_size) < 0)
     {
       if (::close(fd_) < 0)
         return Utils::err(mykafka::Error::FILE_ERROR,

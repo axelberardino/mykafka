@@ -57,9 +57,9 @@ namespace Broker
       int64_t max_segment_size;
       int64_t max_partition_size;
       int64_t segment_ttl;
-
       int64_t reader_offset;
       int64_t commit_offset;
+
       int32_t leader_id;
       int32_t preferred_leader_id;
       std::vector<std::string> replicas;
