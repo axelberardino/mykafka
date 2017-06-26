@@ -45,7 +45,7 @@ namespace Utils
       int32_t partition;
     };
 
-  private:
+  public:
     /*!
     ** @struct RawInfo
     **

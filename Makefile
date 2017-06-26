@@ -97,7 +97,12 @@ $(TEST_PATH)/config-manager-test: $(OBJ) $(SRC_PATH)/utils/ConfigManager_Test.o
 config-manager-test: check-test $(TEST_PATH)/config-manager-test
 	$(TEST_PATH)/$@ --log_level=test_suite
 
-test: all index-test segment-test partition-test config-manager-test
+$(TEST_PATH)/broker-test: $(OBJ) $(SRC_PATH)/broker/Broker_Test.o
+	$(CXX) $(OBJ) $(SRC_PATH)/broker/Broker_Test.o $(LDFLAGS) -lboost_unit_test_framework -o $@
+broker-test: check-test $(TEST_PATH)/broker-test
+	$(TEST_PATH)/$@ --log_level=test_suite
+
+test: all index-test segment-test partition-test config-manager-test broker-test
 
 $(TEST_PATH)/commitlog-bench: $(OBJ) $(SRC_PATH)/commitlog/CommitLog_Bench.o
 	$(CXX) $(OBJ) $(SRC_PATH)/commitlog/CommitLog_Bench.o $(LDFLAGS) -lboost_unit_test_framework -o $@
@@ -113,7 +118,7 @@ clean:
 distclean: clean
 	rm -f $(PRODUCER) $(CONSUMER) $(SERVER) ./test/*
 
-t: config-manager-test
+t: broker-test
 
 PROTOC_CMD = which $(PROTOC)
 PROTOC_CHECK_CMD = $(PROTOC) --version | grep -q libprotoc.3
