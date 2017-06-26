@@ -21,6 +21,10 @@ message Error
   string msg = 2;
 }
 
+message Void
+{
+}
+
 message SendMessageRequest
 {
   int32 producer_id = 1;
@@ -51,6 +55,20 @@ message GetMessageResponse
   bytes payload = 2;
 }
 
+message GetOffsetsRequest
+{
+  string topic = 1;
+  int32 partition = 2;
+}
+
+message GetOffsetsResponse
+{
+  int64 first_offset = 1;
+  int64 commit_offset = 2;
+  int64 last_offset = 3;
+  Error error = 4;
+}
+
 message TopicPartitionRequest
 {
   string topic = 1;
@@ -60,12 +78,19 @@ message TopicPartitionRequest
   int64 segment_ttl = 5;
 }
 
+message BrokerInfoResponse
+{
+  string dump = 1;
+}
+
 service Broker
 {
   rpc SendMessage(SendMessageRequest) returns (SendMessageResponse) {}
   rpc GetMessage(GetMessageRequest) returns (GetMessageResponse) {}
+  rpc GetOffsets(GetOffsetsRequest) returns (GetOffsetsResponse) {}
 
   rpc CreatePartition(TopicPartitionRequest) returns (Error) {}
   rpc DeletePartition(TopicPartitionRequest) returns (Error) {}
   rpc DeleteTopic(TopicPartitionRequest) returns (Error) {}
+  rpc BrokerInfo(Void) returns (BrokerInfoResponse) {}
 }

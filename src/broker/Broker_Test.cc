@@ -23,7 +23,7 @@ namespace
     ~Setup() {}
   };
 
-  void create_one_partition(const std::string& topic, int32_t partition)
+  void createOnePartition(const std::string& topic, int32_t partition)
   {
     Broker::Broker broker(tmp_path);
 
@@ -43,13 +43,48 @@ namespace
     res = broker.close();
     BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
   }
+
+  void readFrom(Broker::Broker& broker, const std::string& topic,
+                int32_t partition, int64_t offset, int64_t nb)
+  {
+    mykafka::GetMessageRequest request;
+    request.set_topic(topic);
+    request.set_partition(partition);
+    request.set_offset(offset);
+    mykafka::GetMessageResponse response;
+
+    for (int i = 0; i < nb; ++i)
+    {
+      broker.getMessage(request, response);
+      auto res = response.error();
+      BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
+      BOOST_CHECK_EQUAL(response.payload(), "some data");
+    }
+  }
+
+  void writeFrom(Broker::Broker& broker, const std::string& topic,
+                 int32_t partition, const std::string& payload, int64_t nb)
+  {
+    mykafka::SendMessageRequest request;
+    request.set_topic(topic);
+    request.set_partition(partition);
+    request.set_payload(payload);
+    mykafka::SendMessageResponse response;
+
+    for (int i = 0; i < nb; ++i)
+    {
+      broker.sendMessage(request, response);
+      auto res = response.error();
+      BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
+    }
+  }
 } // namespace
 
 BOOST_GLOBAL_FIXTURE(Setup);
 
 BOOST_FIXTURE_TEST_CASE(test_nothing_to_load, Setup)
 {
-  create_one_partition("create", 1);
+  createOnePartition("create", 1);
 }
 
 BOOST_FIXTURE_TEST_CASE(test_create_one_partition, Setup)
@@ -196,7 +231,7 @@ BOOST_FIXTURE_TEST_CASE(test_write, Setup)
 {
   const std::string topic = "test_readwrite";
   const int32_t partition = 0;
-  create_one_partition(topic, partition);
+  createOnePartition(topic, partition);
 
   mykafka::SendMessageRequest request;
   request.set_producer_id(0);
@@ -219,6 +254,9 @@ BOOST_FIXTURE_TEST_CASE(test_write, Setup)
   res = response.error();
   BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
   BOOST_CHECK_EQUAL(response.offset(), 1);
+
+  res = broker.close();
+  BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
 }
 
 BOOST_AUTO_TEST_CASE(test_read)
@@ -254,9 +292,70 @@ BOOST_AUTO_TEST_CASE(test_read)
   res = response.error();
   BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::NO_MESSAGE, res.msg());
   BOOST_CHECK_EQUAL(response.payload(), "some data");
+
+  res = broker.close();
+  BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
 }
 
-// get offset
+BOOST_AUTO_TEST_CASE(test_offset)
+{
+  const std::string topic = "test_readwrite";
+  const int32_t partition = 0;
+
+  mykafka::GetOffsetsRequest request;
+  request.set_topic(topic);
+  request.set_partition(partition);
+  mykafka::GetOffsetsResponse response;
+
+  Broker::Broker broker(tmp_path);
+  auto res = broker.load();
+  BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
+
+  broker.getOffsets(request, response);
+  res = response.error();
+  BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
+  BOOST_CHECK_EQUAL(response.first_offset(), 0);
+  BOOST_CHECK_EQUAL(response.commit_offset(), 1);
+  BOOST_CHECK_EQUAL(response.last_offset(), 1);
+
+  res = broker.close();
+  BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
+}
+
+// ============================
+
+BOOST_AUTO_TEST_CASE(test_parallel_read_write)
+{
+  const std::string topic = "parallel_readwrite";
+  const int32_t partition = 0;
+
+  createOnePartition(topic, partition);
+  Broker::Broker broker(tmp_path);
+  auto res = broker.load();
+  BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
+
+  writeFrom(broker, topic, partition, "some data", 10);
+  readFrom(broker, topic, partition, 0, 10);
+
+  // std::vector<std::thread> threads;
+  // writeFrom(partition, 200);
+  // for (int i = 0; i < 4; ++i)
+  // {
+  //   threads.emplace_back(std::thread([&partition]() {
+  //         writeFrom(partition, 200, false);
+  //       }));
+  //   threads.emplace_back(std::thread([&partition]() {
+  //         readFrom(partition, 200);
+  //       }));
+  // }
+  // for (auto& thread : threads)
+  //   thread.join();
+
+  res = broker.close();
+  BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
+}
+
+
 
 // test read, write en //
 

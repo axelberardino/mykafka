@@ -4,6 +4,7 @@
 #include <set>
 #include <memory>
 #include <cassert>
+#include <sstream>
 
 namespace Broker
 {
@@ -127,6 +128,42 @@ namespace Broker
       topics_.erase(entry);
 
     return Utils::err(mykafka::Error::OK);
+  }
+
+  void
+  Broker::getTopicInfo(mykafka::Void&,
+                       mykafka::BrokerInfoResponse& response)
+  {
+    std::ostringstream buff;
+    dump(buff);
+    response.set_dump(buff.str());
+  }
+
+  void
+  Broker::getOffsets(mykafka::GetOffsetsRequest& request,
+                     mykafka::GetOffsetsResponse& response)
+  {
+    const std::string strkey = request.topic() + "-" + std::to_string(request.partition());
+    const Utils::ConfigManager::TopicPartition key{request.topic(), request.partition()};
+    auto error = response.mutable_error();
+    auto found = topics_.find(key);
+    if (found == topics_.cend())
+    {
+      error->set_code(mykafka::Error::TOPIC_ERROR);
+      error->set_msg("The topic " + strkey + " don't exists!");
+      return;
+    }
+
+    response.set_first_offset(found->second.partition->oldestOffset());
+    response.set_last_offset(found->second.partition->newestOffset() - 1);
+
+    Utils::ConfigManager::RawInfo info;
+    auto res = config_manager_.get(key, info);
+    error->set_code(res.code());
+    error->set_msg(res.msg());
+
+    if (res.code() == mykafka::Error::OK)
+      response.set_commit_offset(info.commit_offset);
   }
 
   void

@@ -81,7 +81,23 @@ namespace Broker
     */
     mykafka::Error deleteTopic(mykafka::TopicPartitionRequest& request);
 
-    void getTopicInfo();
+    /*!
+    ** Dump broker info.
+    **
+    ** @param request The client request.
+    ** @param response The response to give to the client.
+    */
+    void getTopicInfo(mykafka::Void&,
+                      mykafka::BrokerInfoResponse& response);
+
+    /*!
+    ** Get low offset, commit offset and high offset.
+    **
+    ** @param request The client request.
+    ** @param response The response to give to the client.
+    */
+    void getOffsets(mykafka::GetOffsetsRequest& request,
+                    mykafka::GetOffsetsResponse& response);
 
     /*!
     ** Get a message from the selected topic/partition.
