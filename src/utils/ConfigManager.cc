@@ -249,8 +249,8 @@ namespace Utils
   ConfigManager::dump(std::ostream& out) const
   {
     for (auto& entry : configs_)
-      out << "Topic/partition:" << entry.first.toString()
-          << ", fd: " << entry.second.fd_
+      out << entry.first.toString() << ": "
+          << "fd: " << entry.second.fd_
           << ", max_seg_size: " << entry.second.info.max_segment_size
           << ", max_part_size: " << entry.second.info.max_partition_size
           << ", segment_ttl: " << entry.second.info.segment_ttl

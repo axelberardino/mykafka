@@ -200,7 +200,7 @@ namespace Broker
   {
     out << "== Topics/Partitions ==\n";
     for (auto& entry : topics_)
-      out << entry.first.toString() << ":"
+      out << entry.first.toString() << ": "
           << "leader: " << entry.second.leader_id
           << ", pref_leader:" << entry.second.preferred_leader_id
           << ", replicas: " << Utils::vecToStr(entry.second.replicas)

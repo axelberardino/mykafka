@@ -52,7 +52,9 @@ namespace Broker
     ** Create a partition on the given topic.
     ** @warning Will failed if the partition already exists!
     **
-    ** @param request The client request.
+    ** @param request The client request
+    **        (needed: topic, partition, max_segment_size,
+    **        max_partition_size, segment_ttl).
     **
     ** @return Error code 0 if no error, or a detailed error.
     */
@@ -62,16 +64,18 @@ namespace Broker
     ** Create a partition on the given topic.
     ** @warning Will failed if the partition don't exists!
     **
-    ** @param request The client request.
+    ** @param request The client request
+    **        (needed: topic, partition).
     **
     ** @return Error code 0 if no error, or a detailed error.
     */
     mykafka::Error deletePartition(mykafka::TopicPartitionRequest& request);
 
     /*!
-    ** Delete an entier topic and all its partition.
+    ** Delete an entire topic and all its partition.
     **
     ** @param request The client request.
+    **        (needed: topic).
     **
     ** @return Error code 0 if no error, or a detailed error.
     */

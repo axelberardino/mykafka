@@ -1,8 +1,10 @@
 #ifndef UTILS_UTILS_HH_
 # define UTILS_UTILS_HH_
 
-# include <inttypes.h>
 # include "mykafka.pb.h"
+
+# include <sstream>
+# include <inttypes.h>
 
 namespace Utils
 {
@@ -59,6 +61,7 @@ namespace Utils
         buff << ",";
       buff << elt;
     }
+    buff << "]";
 
     return buff.str();
   }
