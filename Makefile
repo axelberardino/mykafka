@@ -92,7 +92,12 @@ $(TEST_PATH)/partition-test: $(SOURCES) $(OBJ) $(SRC_PATH)/commitlog/Partition_T
 partition-test: check-test $(TEST_PATH)/partition-test
 	$(TEST_PATH)/$@ --log_level=test_suite
 
-test: index-test segment-test partition-test
+$(TEST_PATH)/config-manager-test: $(SOURCES) $(OBJ) $(SRC_PATH)/utils/ConfigManager_Test.o
+	$(CXX) $(OBJ) $(SRC_PATH)/utils/ConfigManager_Test.o $(LDFLAGS) -lboost_unit_test_framework -o $@
+config-manager-test: check-test $(TEST_PATH)/config-manager-test
+	$(TEST_PATH)/$@ --log_level=test_suite
+
+test: index-test segment-test partition-test config-manager-test
 
 $(TEST_PATH)/commitlog-bench: $(SOURCES) $(OBJ) $(SRC_PATH)/commitlog/CommitLog_Bench.o
 	$(CXX) $(OBJ) $(SRC_PATH)/commitlog/CommitLog_Bench.o $(LDFLAGS) -lboost_unit_test_framework -o $@
@@ -108,7 +113,7 @@ clean:
 distclean: clean
 	rm -f $(PRODUCER) $(CONSUMER) $(SERVER) ./test/*
 
-t: partition-test
+t: config-manager-test
 
 PROTOC_CMD = which $(PROTOC)
 PROTOC_CHECK_CMD = $(PROTOC) --version | grep -q libprotoc.3

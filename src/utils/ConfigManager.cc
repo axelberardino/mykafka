@@ -132,7 +132,6 @@ namespace Utils
   ConfigManager::dump(std::ostream& out) const
   {
     for (auto& entry : configs_)
-    {
       out << "Topic/partition:" << entry.first.toString()
           << ", fd: " << entry.second.fd_
           << ", max_seg_size: " << entry.second.info.max_segment_size
@@ -141,6 +140,5 @@ namespace Utils
           << ", reader_offset: " << entry.second.info.reader_offset
           << ", commit_offset: " << entry.second.info.commit_offset
           << std::endl;
-    }
   }
 } // Utils

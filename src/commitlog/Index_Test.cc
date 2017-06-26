@@ -4,7 +4,7 @@
 #include <boost/test/included/unit_test.hpp>
 
 #include "commitlog/Index.hh"
-#include "commitlog/Utils.hh"
+#include "utils/Utils.hh"
 #include "boost_test_helper.hh"
 
 #include <inttypes.h>
@@ -36,11 +36,11 @@ namespace
 
     struct stat buf;
     fstat(index.fd(), &buf);
-    std::cout << size << " " << CommitLog::Utils::roundDownToMultiple(size,
-                                                                      CommitLog::Index::ENTRY_WIDTH)
+    std::cout << size << " " << Utils::roundDownToMultiple(size,
+                                                           CommitLog::Index::ENTRY_WIDTH)
               << " " << buf.st_size << std::endl;
-    BOOST_CHECK_EQUAL(CommitLog::Utils::roundDownToMultiple(size,
-                                                            CommitLog::Index::ENTRY_WIDTH),
+    BOOST_CHECK_EQUAL(Utils::roundDownToMultiple(size,
+                                                 CommitLog::Index::ENTRY_WIDTH),
                       buf.st_size);
 
     std::vector<Entry> entries;
