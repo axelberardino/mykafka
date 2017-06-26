@@ -9,36 +9,48 @@ namespace Broker
   const std::string CONFIG_FILENAME = "broker.conf";
 
   Broker::Broker(const std::string& base_path)
-    : base_path_(base_path)
+    : base_path_(base_path), config_manager_(base_path + "/config")
   {
   }
 
   Broker::~Broker()
   {
+    close();
   }
 
   mykafka::Error
   Broker::load()
   {
-    // Info info{4096, 0, 0, 0, 0, 0, 0,
-    //     std::vector<std::string>(), std::vector<std::string>(),
-    //     std::make_shared<CommitLog::Partition>(base_path_ + "/test", 0, 0, 0)};
-
-    auto partition = std::make_shared<CommitLog::Partition>(base_path_ + "/default-0", 0, 0, 0);
-    auto res = partition->open();
+    auto res = config_manager_.load();
     if (res.code() != mykafka::Error::OK)
       return res;
 
+    for (auto& cfg : config_manager_)
+    {
+      const std::string part_path = base_path_ + "/" + cfg.first.toString();
+      auto partition = std::make_shared<CommitLog::Partition>(part_path,
+                                                              cfg.second.info.max_segment_size,
+                                                              cfg.second.info.max_partition_size,
+                                                              cfg.second.info.segment_ttl);
+      res = partition->open();
+      if (res.code() != mykafka::Error::OK)
+        return res;
+
+      auto& entry = topics_[cfg.first.topic][cfg.first.partition];
+      entry.leader_id = 0; // FIXME
+      entry.preferred_leader_id = 0; // FIXM
+      entry.replicas.clear(); // FIXME
+      entry.isr.clear(); // FIXME
+      entry.partition = partition;
+    }
+
+    auto partition = std::make_shared<CommitLog::Partition>(base_path_ + "/default-0", 0, 0, 0);
+    res = partition->open();
+    if (res.code() != mykafka::Error::OK)
+      return res;
     topics_["default"][0].partition = partition;
 
     return Utils::err(mykafka::Error::OK);
-  }
-
-  bool
-  Broker::loadConf()
-  {
-    // conf reader class
-    return true;
   }
 
   void
@@ -77,5 +89,21 @@ namespace Broker
     error.set_code(res.code());
     error.set_msg(res.msg());
     response.set_offset(offset);
+  }
+
+  mykafka::Error
+  Broker::close()
+  {
+    for (auto& entry : topics_)
+    {
+      for (auto& partition : entry.second)
+      {
+        auto res = partition.second.partition->close();
+        if (res.code() != mykafka::Error::OK)
+          return res;
+      }
+    }
+
+    return config_manager_.close();
   }
 } // Broker

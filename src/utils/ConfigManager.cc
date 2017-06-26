@@ -16,11 +16,24 @@ namespace Utils
   ConfigManager::ConfigManager(const std::string& path)
     : base_path_(path)
   {
+    fs::create_directories(path);
   }
 
   ConfigManager::~ConfigManager()
   {
     close();
+  }
+
+  ConfigManager::const_iterator
+  ConfigManager::begin()
+  {
+    return configs_.cbegin();
+  }
+
+  ConfigManager::const_iterator
+  ConfigManager::end()
+  {
+    return configs_.cend();
   }
 
   mykafka::Error

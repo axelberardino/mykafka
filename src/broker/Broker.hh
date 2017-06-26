@@ -47,7 +47,23 @@ namespace Broker
                      mykafka::SendMessageResponse& response);
 
     mykafka::Error load();
-    bool loadConf();
+    mykafka::Error createTopic();
+    mykafka::Error deleteTopic();
+    mykafka::Error getTopicInfo();
+
+    /*!
+    ** Close all partition and config files.
+    **
+    ** @return Error code 0 if no error, or a detailed error.
+    */
+    mykafka::Error close();
+
+    /*!
+    ** Dump the entire broker info into a stream.
+    **
+    ** @param out The output stream.
+    */
+    void dump(std::ostream& out) const;
 
   private:
     const std::string base_path_;
@@ -61,7 +77,7 @@ namespace Broker
       std::shared_ptr<CommitLog::Partition> partition;
     };
     std::map<std::string, std::map<int32_t, PartitionInfo> > topics_;
-    Utils::ConfigManager config_;
+    Utils::ConfigManager config_manager_;
   };
 } // Broker
 

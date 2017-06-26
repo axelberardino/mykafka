@@ -74,8 +74,13 @@ namespace Utils
     };
 
   public:
+    typedef std::unordered_map<TopicPartition, CfgInfo, Hash<TopicPartition> > configs_type;
+    typedef configs_type::const_iterator const_iterator;
+
+  public:
     /*!
     ** Initialize a config manager.
+    ** All directories to the given path are created.
     **
     ** @param path The base directory for config files.
     */
@@ -92,6 +97,20 @@ namespace Utils
     ** @return Error code 0 if no error, or a detailed error.
     */
     mykafka::Error load();
+
+    /*!
+    ** Iterator on the begining of the topics list.
+    **
+    ** @return Start iterator.
+    */
+    const_iterator begin();
+
+    /*!
+    ** Iterator on the begining of the topics list.
+    **
+    ** @return Stop iterator.
+    */
+    const_iterator end();
 
     /*!
     ** Create a new config file.
@@ -191,7 +210,7 @@ namespace Utils
 
   private:
     const std::string base_path_;
-    std::unordered_map<TopicPartition, CfgInfo, Hash<TopicPartition> > configs_;
+    configs_type configs_;
   };
 } // Utils
 
