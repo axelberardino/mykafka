@@ -20,6 +20,7 @@ namespace Utils
 
   ConfigManager::~ConfigManager()
   {
+    close();
   }
 
   mykafka::Error
@@ -31,9 +32,19 @@ namespace Utils
       {
         const std::string pathame = entry.path().string();
         const std::string filename = entry.path().stem().string();
-
-        // open({topic, partition});
-        std::cout << pathame << filename << std::endl;
+        auto pos = filename.find_last_of('-');
+        if (pos == std::string::npos)
+          std::cout << "Invalid file name: " << pathame << "skipping..." << std::endl;
+        else
+        {
+          const std::string topic = filename.substr(0, pos);
+          const std::string raw_partition = filename.substr(pos + 1);
+          const int32_t partition = atoi(raw_partition.c_str());
+          if (partition == 0 && raw_partition.find_first_not_of('0') != std::string::npos)
+            std::cout << "Invalid partition name: " << pathame << "skipping..." << std::endl;
+          else
+            open({topic, partition});
+        }
       }
     }
 
@@ -44,7 +55,7 @@ namespace Utils
   ConfigManager::create(const TopicPartition& key,
                         int64_t seg_size, int64_t part_size, int64_t ttl)
   {
-    const std::string path = base_path_ + "/" + key.toString();
+    const std::string path = base_path_ + "/" + key.toString() + ".cfg";
     if (fs::exists(path))
       return Utils::err(mykafka::Error::FILE_ERROR, "File already exists: " + path);
 
@@ -94,7 +105,8 @@ namespace Utils
       return Utils::err(mykafka::Error::FILE_ERROR, "Error mapping the file " + path + "!");
     }
 
-    *reinterpret_cast<RawInfo*>(info.addr_) = {seg_size, part_size, ttl, 0, 0};
+    info.info = {seg_size, part_size, ttl, 0, 0};
+    *reinterpret_cast<RawInfo*>(info.addr_) = info.info;
     configs_.insert(std::make_pair(key, info));
 
     return Utils::err(mykafka::Error::OK);
@@ -103,9 +115,9 @@ namespace Utils
   mykafka::Error
   ConfigManager::open(const TopicPartition& key)
   {
-    const std::string path = base_path_ + "/" + key.toString();
+    const std::string path = base_path_ + "/" + key.toString() + ".cfg";
     if (!fs::is_regular(path))
-      return Utils::err(mykafka::Error::FILE_ERROR, "File not exists: " + path);
+      return Utils::err(mykafka::Error::FILE_NOT_FOUND, "File not exists: " + path);
 
     CfgInfo info;
     info.fd_ = ::open(path.c_str(), O_RDWR | O_CREAT, 0666);
@@ -126,6 +138,98 @@ namespace Utils
     configs_.insert(std::make_pair(key, info));
 
     return Utils::err(mykafka::Error::OK);
+  }
+
+  mykafka::Error
+  ConfigManager::get(const TopicPartition& key, RawInfo& info) const
+  {
+    auto found = configs_.find(key);
+    if (found == configs_.cend())
+      return Utils::err(mykafka::Error::NOT_FOUND, "Can't find info for"
+                        " key " + key.toString() + "!");
+
+    info = found->second.info;
+    return Utils::err(mykafka::Error::OK);
+  }
+
+  mykafka::Error
+  ConfigManager::update(const TopicPartition& key, const RawInfo& info)
+  {
+    auto found = configs_.find(key);
+    if (found == configs_.cend())
+      return Utils::err(mykafka::Error::NOT_FOUND, "Can't find info for"
+                        " key " + key.toString() + "!");
+
+    *reinterpret_cast<RawInfo*>(found->second.addr_) = info;
+    found->second.info = info;
+
+    return Utils::err(mykafka::Error::OK);
+  }
+
+  mykafka::Error
+  ConfigManager::remove(const TopicPartition& key)
+  {
+    auto found = configs_.find(key);
+    if (found == configs_.cend())
+      return Utils::err(mykafka::Error::NOT_FOUND, "Can't find info for"
+                        " key " + key.toString() + "!");
+
+    auto res = close(key);
+    if (res.code() != mykafka::Error::OK)
+      return res;
+
+    fs::remove(base_path_ + "/" + key.toString() + ".cfg");
+    return Utils::err(mykafka::Error::OK);
+  }
+
+  mykafka::Error
+  ConfigManager::close(const TopicPartition& key)
+  {
+    auto found = configs_.find(key);
+    if (found == configs_.cend())
+      return Utils::err(mykafka::Error::NOT_FOUND, "Can't find info for"
+                        " key " + key.toString() + "!");
+
+    const std::string filename = base_path_ + "/" + key.toString() + ".cfg";
+    auto res = close(found->second, filename);
+    if (res.code() != mykafka::Error::OK)
+      return res;
+
+    configs_.erase(found);
+    return Utils::err(mykafka::Error::OK);
+  }
+
+  mykafka::Error
+  ConfigManager::close(const CfgInfo& info, const std::string& filename)
+  {
+    if (::munmap(info.addr_, sizeof (RawInfo)) < 0)
+      return Utils::err(mykafka::Error::FILE_ERROR, "Can't unmap config " + filename + "!");
+    if (::close(info.fd_))
+      return Utils::err(mykafka::Error::FILE_ERROR,
+                        "Can't close " + filename + "!");
+
+    return Utils::err(mykafka::Error::OK);
+  }
+
+  mykafka::Error
+  ConfigManager::close()
+  {
+    for (auto& entry : configs_)
+    {
+      const std::string filename = base_path_ + "/" + entry.first.toString() + ".cfg";
+      auto res = close(entry.second, filename);
+      if (res.code() != mykafka::Error::OK)
+        return res;
+    }
+
+    configs_.clear();
+    return Utils::err(mykafka::Error::OK);
+  }
+
+  int32_t
+  ConfigManager::size() const
+  {
+    return configs_.size();
   }
 
   void

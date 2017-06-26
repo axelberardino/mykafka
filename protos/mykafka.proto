@@ -13,6 +13,7 @@ message Error
     INDEX_ERROR = 4;
     LOG_ERROR = 5;
     PARTITION_ERROR = 6;
+    NOT_FOUND = 7;
   }
   ErrCode code = 1;
   string msg = 2;

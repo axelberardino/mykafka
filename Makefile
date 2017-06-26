@@ -77,29 +77,29 @@ Makefile.deps: $(ALL_SRC)
 %.pb.cc: %.proto
 	$(PROTOC) -I $(PROTOS_PATH) --cpp_out=$(PROTOS_PATH) $<
 
-$(TEST_PATH)/index-test: $(SOURCES) $(OBJ) $(SRC_PATH)/commitlog/Index_Test.o
+$(TEST_PATH)/index-test: $(OBJ) $(SRC_PATH)/commitlog/Index_Test.o
 	$(CXX) $(OBJ) $(SRC_PATH)/commitlog/Index_Test.o $(LDFLAGS) -lboost_unit_test_framework -o $@
 index-test: check-test $(TEST_PATH)/index-test
 	$(TEST_PATH)/$@ --log_level=test_suite
 
-$(TEST_PATH)/segment-test: $(SOURCES) $(OBJ) $(SRC_PATH)/commitlog/Segment_Test.o
+$(TEST_PATH)/segment-test: $(OBJ) $(SRC_PATH)/commitlog/Segment_Test.o
 	$(CXX) $(OBJ) $(SRC_PATH)/commitlog/Segment_Test.o $(LDFLAGS) -lboost_unit_test_framework -o $@
 segment-test: check-test $(TEST_PATH)/segment-test
 	$(TEST_PATH)/$@ --log_level=test_suite
 
-$(TEST_PATH)/partition-test: $(SOURCES) $(OBJ) $(SRC_PATH)/commitlog/Partition_Test.o
+$(TEST_PATH)/partition-test: $(OBJ) $(SRC_PATH)/commitlog/Partition_Test.o
 	$(CXX) $(OBJ) $(SRC_PATH)/commitlog/Partition_Test.o $(LDFLAGS) -lboost_unit_test_framework -o $@
 partition-test: check-test $(TEST_PATH)/partition-test
 	$(TEST_PATH)/$@ --log_level=test_suite
 
-$(TEST_PATH)/config-manager-test: $(SOURCES) $(OBJ) $(SRC_PATH)/utils/ConfigManager_Test.o
+$(TEST_PATH)/config-manager-test: $(OBJ) $(SRC_PATH)/utils/ConfigManager_Test.o
 	$(CXX) $(OBJ) $(SRC_PATH)/utils/ConfigManager_Test.o $(LDFLAGS) -lboost_unit_test_framework -o $@
 config-manager-test: check-test $(TEST_PATH)/config-manager-test
 	$(TEST_PATH)/$@ --log_level=test_suite
 
-test: index-test segment-test partition-test config-manager-test
+test: all index-test segment-test partition-test config-manager-test
 
-$(TEST_PATH)/commitlog-bench: $(SOURCES) $(OBJ) $(SRC_PATH)/commitlog/CommitLog_Bench.o
+$(TEST_PATH)/commitlog-bench: $(OBJ) $(SRC_PATH)/commitlog/CommitLog_Bench.o
 	$(CXX) $(OBJ) $(SRC_PATH)/commitlog/CommitLog_Bench.o $(LDFLAGS) -lboost_unit_test_framework -o $@
 commitlog-bench: check-test $(TEST_PATH)/commitlog-bench
 	$(TEST_PATH)/$@ --log_level=test_suite

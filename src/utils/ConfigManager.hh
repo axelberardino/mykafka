@@ -37,7 +37,7 @@ namespace Utils
       }
 
       std::string topic;
-      int64_t partition;
+      int32_t partition;
     };
 
     struct RawInfo
@@ -47,7 +47,7 @@ namespace Utils
       int64_t segment_ttl;
       int64_t reader_offset;
       int64_t commit_offset;
-    };
+    } __attribute__((packed));
 
     struct CfgInfo
     {
@@ -64,11 +64,17 @@ namespace Utils
     mykafka::Error create(const TopicPartition& key,
                           int64_t seg_size, int64_t part_size, int64_t ttl);
     mykafka::Error open(const TopicPartition& key);
-    mykafka::Error flush(const TopicPartition& key);
+    mykafka::Error get(const TopicPartition& key, RawInfo& info) const;
+    mykafka::Error update(const TopicPartition& key, const RawInfo& info);
+    mykafka::Error remove(const TopicPartition& key);
+    mykafka::Error close(const TopicPartition& key);
+    mykafka::Error close();
+
     void dump(std::ostream& out) const;
+    int32_t size() const;
 
   private:
-    //mykafka::Error write(void* addr, const RawInfo& raw_info);
+    mykafka::Error close(const CfgInfo& info, const std::string& filename);
 
   private:
     const std::string base_path_;
