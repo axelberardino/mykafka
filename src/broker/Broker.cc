@@ -116,7 +116,7 @@ namespace Broker
         auto res = entry->second.partition->deletePartition();
         if (res.code() != mykafka::Error::OK)
           return res;
-        res = config_manager_.remove({request.topic(), request.partition()});
+        res = config_manager_.remove({request.topic(), entry->first.partition});
         if (res.code() != mykafka::Error::OK)
           return res;
         delete_list.push_back(entry);
