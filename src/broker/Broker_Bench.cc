@@ -81,6 +81,11 @@ namespace
     for (int i = 0; i < nb; ++i)
     {
       broker.getMessage(request, response);
+      if (response.error().code() != mykafka::Error::OK)
+      {
+        std::cout << response.error().msg() << std::endl;
+        assert(false);
+      }
       ++nb_read;
       bytes_read += response.payload().size();
     }
@@ -98,6 +103,11 @@ namespace
     for (int i = 0; i < nb; ++i)
     {
       broker.sendMessage(request, response);
+      if (response.error().code() != mykafka::Error::OK)
+      {
+        std::cout << response.error().msg() << std::endl;
+        assert(false);
+      }
       ++nb_written;
       bytes_written += request.payload().size();
     }
@@ -108,7 +118,7 @@ int main()
 {
   namespace fs = boost::filesystem;
 
-  const std::string tmp_path = "/tmp/mykafka-test/broker-bench/";
+  const std::string tmp_path = "/tmp/test/broker-bench/";
   const std::string topic = "bench_readwrite";
   const int32_t partition = 0;
   const int32_t nb_core = 8;
@@ -124,7 +134,7 @@ int main()
   mykafka::TopicPartitionRequest request;
   request.set_topic(topic);
   request.set_max_segment_size(4096 * 1024 * 10); // 40 Mo segment size
-  request.set_max_partition_size(4096 * 1024 * 100); // 400 Mo max partition size
+  request.set_max_partition_size(0);
   request.set_segment_ttl(0);
   request.set_partition(partition);
   broker.createPartition(request);
