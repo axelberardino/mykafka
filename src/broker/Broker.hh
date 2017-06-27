@@ -4,6 +4,7 @@
 # include "commitlog/Partition.hh"
 # include "utils/ConfigManager.hh"
 
+# include <boost/thread/shared_mutex.hpp>
 # include <unordered_map>
 # include <vector>
 # include <inttypes.h>
@@ -184,6 +185,7 @@ namespace Broker
     const std::string base_path_;
     topics_type topics_;
     Utils::ConfigManager config_manager_;
+    mutable boost::shared_mutex mutex_;
   };
 } // Broker
 

@@ -355,13 +355,99 @@ BOOST_AUTO_TEST_CASE(test_parallel_read_write)
   BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
 }
 
+BOOST_FIXTURE_TEST_CASE(test_add_topic_while_read_write, Setup)
+{
+  const std::string topic = "parallel_readwrite";
+  const int32_t partition = 0;
 
+  createOnePartition(topic, partition);
+  Broker::Broker broker(tmp_path);
+  auto res = broker.load();
+  BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
 
-// test read, write en //
+  writeFrom(broker, topic, partition, "some data", 200);
+  readFrom(broker, topic, partition, 0, 200);
 
-// add topic while read/write
-// delete partition while read/write
+  mykafka::TopicPartitionRequest request;
+  request.set_topic(topic);
+  request.set_max_segment_size(4096);
+  request.set_max_partition_size(0);
+  request.set_segment_ttl(0);
+
+  std::vector<std::thread> threads;
+  threads.emplace_back(std::thread([&]() {
+        for (int i = 0; i < 200; ++i)
+        {
+          request.set_partition(i);
+          auto res = broker.createPartition(request);
+          BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
+        }
+      }));
+
+  for (int i = 0; i < 4; ++i)
+  {
+    threads.emplace_back(std::thread([&]() {
+          writeFrom(broker, topic, partition, "some data", 200);
+        }));
+    threads.emplace_back(std::thread([&]() {
+          writeFrom(broker, topic, partition, "some data", 200);
+        }));
+    threads.emplace_back(std::thread([&]() {
+          readFrom(broker, topic, partition, 0, 200);
+        }));
+  }
+  for (auto& thread : threads)
+    thread.join();
+
+  res = broker.close();
+  BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
+}
+
+BOOST_AUTO_TEST_CASE(test_delete_partition_while_read_write)
+{
+  const std::string topic = "parallel_readwrite";
+  const int32_t partition = 0;
+
+  Broker::Broker broker(tmp_path);
+  auto res = broker.load();
+  BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
+
+  writeFrom(broker, topic, partition, "some data", 200);
+  readFrom(broker, topic, partition, 0, 200);
+
+  mykafka::TopicPartitionRequest request;
+  request.set_topic(topic);
+  request.set_max_segment_size(4096);
+  request.set_max_partition_size(0);
+  request.set_segment_ttl(0);
+
+  std::vector<std::thread> threads;
+  threads.emplace_back(std::thread([&]() {
+        for (int i = 0; i < 200; ++i)
+        {
+          request.set_partition(i);
+          auto res = broker.deletePartition(request);
+          BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
+        }
+      }));
+
+  for (int i = 0; i < 4; ++i)
+  {
+    threads.emplace_back(std::thread([&]() {
+          writeFrom(broker, topic, partition, "some data", 200);
+        }));
+    threads.emplace_back(std::thread([&]() {
+          writeFrom(broker, topic, partition, "some data", 200);
+        }));
+    threads.emplace_back(std::thread([&]() {
+          readFrom(broker, topic, partition, 0, 200);
+        }));
+  }
+  for (auto& thread : threads)
+    thread.join();
+
+  res = broker.close();
+  BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
+}
+
 // delete topic while read/write
-
-// Test attribution des consumer-id et producer-id
-// group-id

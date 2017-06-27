@@ -46,6 +46,8 @@ namespace Broker
   mykafka::Error
   Broker::load()
   {
+    boost::lock_guard<boost::shared_mutex> lock(mutex_);
+
     auto res = config_manager_.load();
     if (res.code() != mykafka::Error::OK)
       return res;
@@ -67,6 +69,8 @@ namespace Broker
   mykafka::Error
   Broker::createPartition(mykafka::TopicPartitionRequest& request)
   {
+    boost::lock_guard<boost::shared_mutex> lock(mutex_);
+
     const std::string key = request.topic() + "-" + std::to_string(request.partition());
     auto found = topics_.find({request.topic(), request.partition()});
     if (found != topics_.cend())
@@ -90,6 +94,8 @@ namespace Broker
   mykafka::Error
   Broker::deletePartition(mykafka::TopicPartitionRequest& request)
   {
+    boost::lock_guard<boost::shared_mutex> lock(mutex_);
+
     const std::string key = request.topic() + "-" + std::to_string(request.partition());
     auto found = topics_.find({request.topic(), request.partition()});
     if (found == topics_.cend())
@@ -107,6 +113,8 @@ namespace Broker
   mykafka::Error
   Broker::deleteTopic(mykafka::TopicPartitionRequest& request)
   {
+    boost::lock_guard<boost::shared_mutex> lock(mutex_);
+
     std::vector<iterator> delete_list;
 
     auto end = topics_.end();
@@ -134,6 +142,8 @@ namespace Broker
   Broker::getTopicInfo(mykafka::Void&,
                        mykafka::BrokerInfoResponse& response)
   {
+    boost::shared_lock<boost::shared_mutex> lock(mutex_);
+
     std::ostringstream buff;
     dump(buff);
     response.set_dump(buff.str());
@@ -143,6 +153,8 @@ namespace Broker
   Broker::getOffsets(mykafka::GetOffsetsRequest& request,
                      mykafka::GetOffsetsResponse& response)
   {
+    boost::shared_lock<boost::shared_mutex> lock(mutex_);
+
     const std::string strkey = request.topic() + "-" + std::to_string(request.partition());
     const Utils::ConfigManager::TopicPartition key{request.topic(), request.partition()};
     auto error = response.mutable_error();
@@ -170,6 +182,8 @@ namespace Broker
   Broker::getMessage(mykafka::GetMessageRequest& request,
                      mykafka::GetMessageResponse& response)
   {
+    boost::shared_lock<boost::shared_mutex> lock(mutex_);
+
     const std::string strkey = request.topic() + "-" + std::to_string(request.partition());
     const Utils::ConfigManager::TopicPartition key{request.topic(), request.partition()};
     auto error = response.mutable_error();
@@ -208,6 +222,8 @@ namespace Broker
   Broker::sendMessage(mykafka::SendMessageRequest& request,
                       mykafka::SendMessageResponse& response)
   {
+    boost::shared_lock<boost::shared_mutex> lock(mutex_);
+
     const std::string strkey = request.topic() + "-" + std::to_string(request.partition());
     const Utils::ConfigManager::TopicPartition key{request.topic(), request.partition()};
     auto error = response.mutable_error();
@@ -237,6 +253,8 @@ namespace Broker
   mykafka::Error
   Broker::close()
   {
+    boost::lock_guard<boost::shared_mutex> lock(mutex_);
+
     for (auto& entry : topics_)
     {
       auto res = entry.second.partition->close();
@@ -250,6 +268,8 @@ namespace Broker
   int32_t
   Broker::nbTopics() const
   {
+    boost::shared_lock<boost::shared_mutex> lock(mutex_);
+
     std::set<std::string> set;
     for (auto& entry : topics_)
       set.insert(entry.first.topic);
@@ -259,6 +279,8 @@ namespace Broker
   int32_t
   Broker::nbPartitions() const
   {
+    boost::shared_lock<boost::shared_mutex> lock(mutex_);
+
     return topics_.size();
   }
 
