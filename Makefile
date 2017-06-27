@@ -129,14 +129,19 @@ broker-bench: check-test $(TEST_PATH)/broker-bench
 
 bench: commitlog-bench broker-bench
 
+doc/refman.pdf:
+	doxygen doc/Doxyfile && cd doc/latex && $(MAKE) && cp refman.pdf ..
+
+doc: doc/refman.pdf
+
+demo:
+
 clean:
 	rm -f Makefile.deps $(PROTOS_PATH)/*.cc $(PROTOS_PATH)/*.h
 	find . -name "*.o" | xargs rm -f
 
 distclean: clean
 	rm -f $(PRODUCER) $(CONSUMER) $(SERVER) ./test/*
-
-t: all broker-bench
 
 PROTOC_CMD = which $(PROTOC)
 PROTOC_CHECK_CMD = $(PROTOC) --version | grep -q libprotoc.3
@@ -205,3 +210,5 @@ NODEPS := clean distclean
 ifeq (0, $(words $(findstring $(MAKECMDGOALS), $(NODEPS))))
     -include Makefile.deps
 endif
+
+.PHONY: doc demo

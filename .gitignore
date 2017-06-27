@@ -8,3 +8,8 @@ mykafka-producer
 mykafka-consumer
 mykafka-ctl
 test
+doc/doxygen_sqlite3.db
+doc/html/
+doc/latex/
+doc/man/
+doc/refman.pdf
