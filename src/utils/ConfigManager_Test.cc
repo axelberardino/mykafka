@@ -49,7 +49,7 @@ BOOST_AUTO_TEST_CASE(test_read_conf)
   BOOST_CHECK_EQUAL(info.max_segment_size, 1);
   BOOST_CHECK_EQUAL(info.max_partition_size, 2);
   BOOST_CHECK_EQUAL(info.segment_ttl, 3);
-  BOOST_CHECK_EQUAL(info.commit_offset, 0);
+  BOOST_CHECK_EQUAL(info.commit_offset, -1);
   config.dump(std::cout);
   res = config.close();
   BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
@@ -90,7 +90,7 @@ BOOST_FIXTURE_TEST_CASE(test_create_read_update_read, Setup)
   BOOST_CHECK_EQUAL(info.max_segment_size, 1);
   BOOST_CHECK_EQUAL(info.max_partition_size, 2);
   BOOST_CHECK_EQUAL(info.segment_ttl, 3);
-  BOOST_CHECK_EQUAL(info.commit_offset, 0);
+  BOOST_CHECK_EQUAL(info.commit_offset, -1);
 
   info.max_segment_size = 123;
   info.max_partition_size = 456;
@@ -143,7 +143,7 @@ BOOST_FIXTURE_TEST_CASE(test_update_commit_offset, Setup)
   BOOST_CHECK_EQUAL(info.max_segment_size, 1);
   BOOST_CHECK_EQUAL(info.max_partition_size, 2);
   BOOST_CHECK_EQUAL(info.segment_ttl, 3);
-  BOOST_CHECK_EQUAL(info.commit_offset, 0);
+  BOOST_CHECK_EQUAL(info.commit_offset, -1);
 
   res = config.updateCommitOffset({"update_commit_offset", 0}, 713);
   BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());

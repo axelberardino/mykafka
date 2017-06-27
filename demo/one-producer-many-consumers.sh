@@ -20,23 +20,24 @@ server_pid=$!
 
 sleep 1
 
-section "Add topic test_topic, partition 1"
-launch "./$CTL --topic=test_topic --partition=1 --action=create"
+section "Add topic mytopic, partition 0"
+launch "./$CTL --topic=mytopic --partition=0 --action=create"
 
-section "Check that partition exists"
-launch "./$CTL --action=info"
+section "We launch 8 consumers, they will consume as soon as there is data on the partition"
+consumer_pids=""
 
-section "Launch producer, to insert /usr/share/dict/british-english, please wait..."
-launch "cat /usr/share/dict/british-english | ./$PRODUCER --topic test_topic --partition 1" "$LOG_DIR/producer.log"
-text "Inserted $(cat /usr/share/dict/british-english | wc -l) words!"
-tail -n 10 $LOG_DIR/producer.log
+for i in $(seq 8); do
+    launch_bg "./$CONSUMER --topic=mytopic --partition=0" "$LOG_DIR/consumer-$i.log"
+    consumer_pids="$consumer_pids $!"
+done
 
-section "Launch consumer, to ge the words, please wait..."
-launch "./$CONSUMER --topic=test_topic --partition=1 --stop-if-no-message=true" "$LOG_DIR/consumer.log"
-text "Execution finished"
-tail -n 10 $LOG_DIR/consumer.log
+section "Launch the producer, to insert the british dictionnary"
+launch "cat /usr/share/dict/british-english | ./$PRODUCER --topic=mytopic --partition 0" "$LOG_DIR/producer.log"
 
-section "Stop the server"
-launch "kill $server_pid"
+section "Just wait a little, to let the consumers get the data"
+launch "sleep 3"
+
+section "Stop the server, and the consumers"
+launch "kill $server_pid $consumer_pids"
 
 wait

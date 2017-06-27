@@ -26,7 +26,7 @@ launch "./$CTL --topic=test_topic --partition=1 --action=create"
 section "Check that partition exists"
 launch "./$CTL --action=info"
 
-section "Launch producer, to insert /usr/share/dict/british-english, please wait..."
+section "Launch producer, to insert english dictionnary, please wait..."
 launch "cat /usr/share/dict/british-english | ./$PRODUCER --topic test_topic --partition 1" "$LOG_DIR/producer.log"
 text "Inserted $(cat /usr/share/dict/british-english | wc -l) words!"
 tail -n 10 $LOG_DIR/producer.log

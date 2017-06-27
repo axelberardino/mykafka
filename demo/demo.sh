@@ -1,7 +1,8 @@
 #!/bin/bash
 
 BASE_DIR=/tmp/mykafka-demo
-DEMOS="simple-producer-consumer.sh one-producer-many-consumers.sh"
+#DEMOS="simple-producer-consumer.sh ctl-orders.sh one-producer-many-consumers.sh"
+DEMOS="one-producer-many-consumers.sh"
 
 trap "echo" SIGTERM
 
@@ -25,3 +26,9 @@ for demo in $DEMOS; do
     ./${prefix}/${demo} "$BASE_DIR"
     read -p "Press enter to start the next demo"
 done
+
+#TODO
+#
+# Test delete partition, while read.
+# Test delete topic, while read.
+# Test gros bench, 1 writer, 16 lecteurs infinis.

@@ -76,13 +76,18 @@ int main(int argc, char** argv)
 
     grpc::Status res;
     if (partition < 0)
+    {
       res = client.deleteTopic(request, response);
+      CHECK_ERROR("delete partition", response.code(), response.msg());
+      std::cout << "Topic " << topic << " deleted!" << std::endl;
+    }
     else
+    {
       res = client.deletePartition(request, response);
-    CHECK_ERROR("delete topic/partition", response.code(), response.msg());
-
-    std::cout << "Partition " << topic << "/"
-              << partition << " created!" << std::endl;
+      CHECK_ERROR("delete topic", response.code(), response.msg());
+      std::cout << "Partition " << topic << "/"
+                << partition << " deleted!" << std::endl;
+    }
   }
   else if (action == "offsets")
   {

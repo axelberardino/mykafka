@@ -121,7 +121,7 @@ namespace Utils
       return Utils::err(mykafka::Error::FILE_ERROR, "Error mapping the file " + path + "!");
     }
 
-    info.info = {seg_size, part_size, ttl, 0};
+    info.info = {seg_size, part_size, ttl, -1};
     *reinterpret_cast<RawInfo*>(info.addr_) = info.info;
     configs_.insert(std::make_pair(key, info));
 

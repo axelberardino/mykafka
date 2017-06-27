@@ -50,11 +50,14 @@ int main(int argc, char** argv)
       request.set_partition(partition);
       request.set_payload(line);
       auto res = client.sendMessage(request, response, true);
-      if (res.ok())
-        std::cout << "Payload written at offset " << response.offset() << std::endl;
+      if (!res.ok())
+        std::cout << res.error_code() << ": " << res.error_message() << std::endl;
       else
       {
-        std::cout << res.error_code() << ": " << res.error_message() << std::endl;
+        if (response.error().code() == mykafka::Error::OK)
+          std::cout << "Payload written at offset " << response.offset() << std::endl;
+        else
+          std::cout << response.error().code() << ": " << response.error().msg() << std::endl;
       }
   }
 
