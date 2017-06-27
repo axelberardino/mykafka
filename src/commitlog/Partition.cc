@@ -191,8 +191,6 @@ namespace CommitLog
   Partition::close()
   {
     boost::lock_guard<boost::shared_mutex> lock(mutex_);
-    if (cancel_)
-      return Utils::err(mykafka::Error::PARTITION_ERROR, "Partition is closed");
 
     cancel_ = true;
     active_segment_ = 0;

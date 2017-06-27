@@ -1,5 +1,6 @@
 #include "utils/ConfigManager.hh"
 
+#include <boost/thread.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/range/iterator_range.hpp>
 
@@ -68,6 +69,8 @@ namespace Utils
   ConfigManager::create(const TopicPartition& key,
                         int64_t seg_size, int64_t part_size, int64_t ttl)
   {
+    boost::lock_guard<boost::mutex> lock(mutex_);
+
     const std::string path = base_path_ + "/" + key.toString() + ".cfg";
     if (fs::exists(path))
       return Utils::err(mykafka::Error::FILE_ERROR, "File already exists: " + path);
@@ -128,6 +131,8 @@ namespace Utils
   mykafka::Error
   ConfigManager::open(const TopicPartition& key)
   {
+    boost::lock_guard<boost::mutex> lock(mutex_);
+
     const std::string path = base_path_ + "/" + key.toString() + ".cfg";
     if (!fs::is_regular(path))
       return Utils::err(mykafka::Error::FILE_NOT_FOUND, "File not exists: " + path);
@@ -156,6 +161,8 @@ namespace Utils
   mykafka::Error
   ConfigManager::get(const TopicPartition& key, RawInfo& info) const
   {
+    boost::lock_guard<boost::mutex> lock(mutex_);
+
     auto found = configs_.find(key);
     if (found == configs_.cend())
       return Utils::err(mykafka::Error::NOT_FOUND, "Can't find info for"
@@ -168,6 +175,8 @@ namespace Utils
   mykafka::Error
   ConfigManager::update(const TopicPartition& key, const RawInfo& info)
   {
+    boost::lock_guard<boost::mutex> lock(mutex_);
+
     auto found = configs_.find(key);
     if (found == configs_.cend())
       return Utils::err(mykafka::Error::NOT_FOUND, "Can't find info for"
@@ -182,6 +191,8 @@ namespace Utils
   mykafka::Error
   ConfigManager::updateCommitOffset(const TopicPartition& key, int64_t commit_offset)
   {
+    boost::lock_guard<boost::mutex> lock(mutex_);
+
     auto found = configs_.find(key);
     if (found == configs_.cend())
       return Utils::err(mykafka::Error::NOT_FOUND, "Can't find info for"
@@ -197,11 +208,6 @@ namespace Utils
   mykafka::Error
   ConfigManager::remove(const TopicPartition& key)
   {
-    auto found = configs_.find(key);
-    if (found == configs_.cend())
-      return Utils::err(mykafka::Error::NOT_FOUND, "Can't find info for"
-                        " key " + key.toString() + "!");
-
     auto res = close(key);
     if (res.code() != mykafka::Error::OK)
       return res;
@@ -213,6 +219,8 @@ namespace Utils
   mykafka::Error
   ConfigManager::close(const TopicPartition& key)
   {
+    boost::lock_guard<boost::mutex> lock(mutex_);
+
     auto found = configs_.find(key);
     if (found == configs_.cend())
       return Utils::err(mykafka::Error::NOT_FOUND, "Can't find info for"
@@ -242,6 +250,8 @@ namespace Utils
   mykafka::Error
   ConfigManager::close()
   {
+    boost::lock_guard<boost::mutex> lock(mutex_);
+
     for (auto& entry : configs_)
     {
       const std::string filename = base_path_ + "/" + entry.first.toString() + ".cfg";
@@ -257,12 +267,15 @@ namespace Utils
   int32_t
   ConfigManager::size() const
   {
+    boost::lock_guard<boost::mutex> lock(mutex_);
     return configs_.size();
   }
 
   void
   ConfigManager::dump(std::ostream& out) const
   {
+    boost::lock_guard<boost::mutex> lock(mutex_);
+
     for (auto& entry : configs_)
       out << entry.first.toString() << ": "
           << "fd: " << entry.second.fd_

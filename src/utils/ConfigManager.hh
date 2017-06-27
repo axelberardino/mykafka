@@ -4,6 +4,7 @@
 # include "utils/Utils.hh"
 
 # include <boost/functional/hash.hpp>
+# include <boost/thread/mutex.hpp>
 # include <unordered_map>
 
 namespace Utils
@@ -220,6 +221,7 @@ namespace Utils
   private:
     const std::string base_path_;
     configs_type configs_;
+    mutable boost::mutex mutex_;
   };
 } // Utils
 

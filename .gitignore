@@ -3,8 +3,8 @@ grpc
 *.pb.cc
 *.pb.h
 *.deps
-mykafka-client
 mykafka-server
 mykafka-producer
 mykafka-consumer
+mykafka-ctl
 test

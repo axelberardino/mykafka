@@ -32,6 +32,9 @@ BOOST_AUTO_TEST_CASE(test_create_conf)
 
   auto res = config.create({"simple", 0}, 1, 2, 3);
   BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
+
+  res = config.close();
+  BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
 }
 
 BOOST_AUTO_TEST_CASE(test_read_conf)

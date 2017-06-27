@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS += -I/usr/local/include -I./protos/ -I./src/ -pthread -W -Wall -std=c++11
+CXXFLAGS += -I/usr/local/include -I./protos/ -I./src/ -pthread -W -Wall -std=c++11 -O0 -g -ggdb
 LDFLAGS += -L/usr/local/lib `pkg-config --libs grpc++ grpc`       \
            -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed \
            -lprotobuf -lpthread -ldl -lboost_system -lboost_thread \
@@ -31,6 +31,9 @@ SOURCES = \
 	$(SRC_PATH)/network/SendMessageService.cc \
 	$(SRC_PATH)/network/GetOffsetsService.cc \
 	$(SRC_PATH)/network/BrokerInfoService.cc \
+	$(SRC_PATH)/network/CreatePartitionService.cc \
+	$(SRC_PATH)/network/DeletePartitionService.cc \
+	$(SRC_PATH)/network/DeleteTopicService.cc \
 	$(SRC_PATH)/broker/Broker.cc
 
 HEADERS = $(SOURCES:.cc=.hh)
@@ -38,6 +41,7 @@ HEADERS = $(SOURCES:.cc=.hh)
 PRODUCER_SRC = $(SRC_PATH)/main-producer.cc
 CONSUMER_SRC = $(SRC_PATH)/main-consumer.cc
 SERVER_SRC = $(SRC_PATH)/main-server.cc
+CONTROL_SRC = $(SRC_PATH)/main-ctl.cc
 GRPC_SRC = $(PROTOS:.proto=.grpc.pb.cc)
 PB_SRC = $(PROTOS:.proto=.pb.cc)
 
@@ -48,12 +52,14 @@ OBJ = $(SOURCES:.cc=.o) $(GRPC_SRC:.grpc.pb.cc=.grpc.pb.o) $(PB_SRC:.pb.cc=.pb.o
 PRODUCER_OBJ =  $(OBJ) $(PRODUCER_SRC:.cc=.o)
 CONSUMER_OBJ =  $(OBJ) $(CONSUMER_SRC:.cc=.o)
 SERVER_OBJ = $(OBJ) $(SERVER_SRC:.cc=.o)
+CONTROL_OBJ = $(OBJ) $(CONTROL_SRC:.cc=.o)
 
 PRODUCER = mykafka-producer
 CONSUMER = mykafka-consumer
 SERVER = mykafka-server
+CONTROL = mykafka-ctl
 
-all: $(PRODUCER) $(CONSUMER) $(SERVER)
+all: $(PRODUCER) $(CONSUMER) $(SERVER) $(CONTROL)
 
 $(PRODUCER): system-check $(PRODUCER_OBJ) $(HEADERS)
 	$(CXX) $(PRODUCER_OBJ) $(LDFLAGS) -o $@
@@ -63,6 +69,9 @@ $(CONSUMER): system-check $(CONSUMER_OBJ) $(HEADERS)
 
 $(SERVER): system-check $(SERVER_OBJ) $(HEADERS)
 	$(CXX) $(SERVER_OBJ) $(LDFLAGS) -o $@
+
+$(CONTROL): system-check $(CONTROL_OBJ) $(HEADERS)
+	$(CXX) $(CONTROL_OBJ) $(LDFLAGS) -o $@
 
 Makefile.deps: $(ALL_SRC)
 	$(CXX) $(CXXFLAGS) -MM $(ALL_SRC) > Makefile.deps
@@ -111,7 +120,12 @@ $(TEST_PATH)/commitlog-bench: $(OBJ) $(SRC_PATH)/commitlog/CommitLog_Bench.o
 commitlog-bench: check-test $(TEST_PATH)/commitlog-bench
 	$(TEST_PATH)/$@ --log_level=test_suite
 
-bench: commitlog-bench
+$(TEST_PATH)/broker-bench: $(OBJ) $(SRC_PATH)/broker/Broker_Bench.o
+	$(CXX) $(OBJ) $(SRC_PATH)/broker/Broker_Bench.o $(LDFLAGS) -o $@
+broker-bench: check-test $(TEST_PATH)/broker-bench
+	$(TEST_PATH)/$@
+
+bench: commitlog-bench broker-bench
 
 clean:
 	rm -f Makefile.deps $(PROTOS_PATH)/*.cc $(PROTOS_PATH)/*.h
@@ -120,7 +134,7 @@ clean:
 distclean: clean
 	rm -f $(PRODUCER) $(CONSUMER) $(SERVER) ./test/*
 
-t: all broker-test
+t: all broker-bench
 
 PROTOC_CMD = which $(PROTOC)
 PROTOC_CHECK_CMD = $(PROTOC) --version | grep -q libprotoc.3

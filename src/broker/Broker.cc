@@ -69,21 +69,24 @@ namespace Broker
   mykafka::Error
   Broker::createPartition(mykafka::TopicPartitionRequest& request)
   {
-    boost::lock_guard<boost::shared_mutex> lock(mutex_);
+    //    {
+      boost::lock_guard<boost::shared_mutex> lock(mutex_);
 
-    const std::string key = request.topic() + "-" + std::to_string(request.partition());
-    auto found = topics_.find({request.topic(), request.partition()});
-    if (found != topics_.cend())
-      return Utils::err(mykafka::Error::TOPIC_ERROR,
-                        "The topic/partition " + key + " already exists!");
+      const std::string key = request.topic() + "-" + std::to_string(request.partition());
+      auto found = topics_.find({request.topic(), request.partition()});
+      if (found != topics_.cend())
+        return Utils::err(mykafka::Error::TOPIC_ERROR,
+                          "The topic/partition " + key + " already exists!");
 
-    auto res = createAndAddNewPartition(base_path_ + "/" + key,
-                                        request.topic(), request.partition(),
-                                        request.max_segment_size(),
-                                        request.max_partition_size(),
-                                        request.segment_ttl());
-    if (res.code() != mykafka::Error::OK)
-      return res;
+      auto res = createAndAddNewPartition(base_path_ + "/" + key,
+                                          request.topic(), request.partition(),
+                                          request.max_segment_size(),
+                                          request.max_partition_size(),
+                                          request.segment_ttl());
+      if (res.code() != mykafka::Error::OK)
+        return res;
+
+      //    }
 
     return config_manager_.create({request.topic(), request.partition()},
                                   request.max_segment_size(),
@@ -94,20 +97,24 @@ namespace Broker
   mykafka::Error
   Broker::deletePartition(mykafka::TopicPartitionRequest& request)
   {
-    boost::lock_guard<boost::shared_mutex> lock(mutex_);
+    //    {
+      boost::lock_guard<boost::shared_mutex> lock(mutex_);
 
-    const std::string key = request.topic() + "-" + std::to_string(request.partition());
-    auto found = topics_.find({request.topic(), request.partition()});
-    if (found == topics_.cend())
-      return Utils::err(mykafka::Error::TOPIC_ERROR,
-                        "The topic " + key + " don't exists!");
+      const std::string key = request.topic() + "-" + std::to_string(request.partition());
+      auto found = topics_.find({request.topic(), request.partition()});
+      if (found == topics_.cend())
+        return Utils::err(mykafka::Error::TOPIC_ERROR,
+                          "The topic " + key + " don't exists!");
 
-    auto res = found->second.partition->deletePartition();
-    if (res.code() != mykafka::Error::OK)
-      return res;
-    topics_.erase(found);
+      //auto res = found->second.partition->deletePartition();
+      auto res = found->second.partition->close();
+      if (res.code() != mykafka::Error::OK)
+        return res;
+      topics_.erase(found);
+      //    }
 
-    return config_manager_.remove({request.topic(), request.partition()});
+      return Utils::err(mykafka::Error::OK);
+      //    return config_manager_.remove({request.topic(), request.partition()});
   }
 
   mykafka::Error
@@ -153,21 +160,23 @@ namespace Broker
   Broker::getOffsets(mykafka::GetOffsetsRequest& request,
                      mykafka::GetOffsetsResponse& response)
   {
-    boost::shared_lock<boost::shared_mutex> lock(mutex_);
-
-    const std::string strkey = request.topic() + "-" + std::to_string(request.partition());
     const Utils::ConfigManager::TopicPartition key{request.topic(), request.partition()};
     auto error = response.mutable_error();
-    auto found = topics_.find(key);
-    if (found == topics_.cend())
     {
-      error->set_code(mykafka::Error::TOPIC_ERROR);
-      error->set_msg("The topic " + strkey + " don't exists!");
-      return;
-    }
+      boost::shared_lock<boost::shared_mutex> lock(mutex_);
 
-    response.set_first_offset(found->second.partition->oldestOffset());
-    response.set_last_offset(found->second.partition->newestOffset() - 1);
+      const std::string strkey = request.topic() + "-" + std::to_string(request.partition());
+      auto found = topics_.find(key);
+      if (found == topics_.cend())
+      {
+        error->set_code(mykafka::Error::TOPIC_ERROR);
+        error->set_msg("The topic " + strkey + " don't exists!");
+        return;
+      }
+
+      response.set_first_offset(found->second.partition->oldestOffset());
+      response.set_last_offset(found->second.partition->newestOffset() - 1);
+    }
 
     Utils::ConfigManager::RawInfo info;
     auto res = config_manager_.get(key, info);
@@ -182,68 +191,83 @@ namespace Broker
   Broker::getMessage(mykafka::GetMessageRequest& request,
                      mykafka::GetMessageResponse& response)
   {
-    boost::shared_lock<boost::shared_mutex> lock(mutex_);
+    boost::lock_guard<boost::shared_mutex> lock(mutex_);
 
-    const std::string strkey = request.topic() + "-" + std::to_string(request.partition());
     const Utils::ConfigManager::TopicPartition key{request.topic(), request.partition()};
     auto error = response.mutable_error();
-    auto found = topics_.find(key);
-    if (found == topics_.cend())
-    {
-      error->set_code(mykafka::Error::TOPIC_ERROR);
-      error->set_msg("The topic " + strkey + " don't exists!");
-      return;
-    }
 
-    Utils::ConfigManager::RawInfo info;
-    auto res = config_manager_.get(key, info);
-    if (res.code() != mykafka::Error::OK)
-    {
-      error->set_code(res.code());
-      error->set_msg(res.msg());
-      return;
-    }
+    // Utils::ConfigManager::RawInfo info;
+    // auto res = config_manager_.get(key, info);
+    // if (res.code() != mykafka::Error::OK)
+    // {
+    //   error->set_code(res.code());
+    //   error->set_msg(res.msg());
+    //   return;
+    // }
 
-    if (request.offset() > info.commit_offset)
-    {
-      error->set_code(mykafka::Error::NO_MESSAGE);
-      error->set_msg("No more messages available!");
-      return;
-    }
+    // if (request.offset() > info.commit_offset)
+    // {
+    //   error->set_code(mykafka::Error::NO_MESSAGE);
+    //   error->set_msg("No more messages available!");
+    //   return;
+    // }
 
-    std::vector<char> payload;
-    res = found->second.partition->readAt(payload, request.offset());
-    error->set_code(res.code());
-    error->set_msg(res.msg());
-    response.set_payload(std::string(payload.begin(), payload.end()));
+
+    //boost::shared_lock<boost::shared_mutex> lock(mutex_);
+    //boost::lock_guard<boost::shared_mutex> lock(mutex_);
+
+    // const std::string strkey = request.topic() + "-" + std::to_string(request.partition());
+    // auto found = topics_.find(key);
+    // if (found == topics_.cend())
+    // {
+    //   error->set_code(mykafka::Error::TOPIC_ERROR);
+    //   error->set_msg("The topic " + strkey + " don't exists!");
+    //   return;
+    // }
+
+    // std::vector<char> payload;
+    // res = found->second.partition->readAt(payload, request.offset());
+    // error->set_code(res.code());
+    // error->set_msg(res.msg());
+    // response.set_payload(std::string(payload.begin(), payload.end()));
+
+
+    //
+    error->set_code(mykafka::Error::OK);
+    response.set_payload("some data");
   }
 
   void
   Broker::sendMessage(mykafka::SendMessageRequest& request,
                       mykafka::SendMessageResponse& response)
   {
-    boost::shared_lock<boost::shared_mutex> lock(mutex_);
+    boost::lock_guard<boost::shared_mutex> lock(mutex_);
 
-    const std::string strkey = request.topic() + "-" + std::to_string(request.partition());
     const Utils::ConfigManager::TopicPartition key{request.topic(), request.partition()};
     auto error = response.mutable_error();
-    auto found = topics_.find(key);
-    if (found == topics_.cend())
+    int64_t offset = 0;
     {
-      error->set_code(mykafka::Error::TOPIC_ERROR);
-      error->set_msg("The topic " + strkey + " don't exists!");
-      return;
+      //boost::lock_guard<boost::shared_mutex> lock(mutex_);
+      //boost::shared_lock<boost::shared_mutex> lock(mutex_);
+
+      const std::string strkey = request.topic() + "-" + std::to_string(request.partition());
+      auto found = topics_.find(key);
+      if (found == topics_.cend())
+      {
+        error->set_code(mykafka::Error::TOPIC_ERROR);
+        error->set_msg("The topic " + strkey + " don't exists!");
+        return;
+      }
+
+      std::vector<char> payload(request.payload().begin(), request.payload().end());
+      auto res = found->second.partition->write(payload, offset);
+      error->set_code(res.code());
+      error->set_msg(res.msg());
+      if (res.code() != mykafka::Error::OK)
+        return;
     }
 
-    std::vector<char> payload(request.payload().begin(), request.payload().end());
-    int64_t offset = 0;
-    auto res = found->second.partition->write(payload, offset);
-    error->set_code(res.code());
-    error->set_msg(res.msg());
-    if (res.code() != mykafka::Error::OK)
-      return;
-
-    res = config_manager_.updateCommitOffset(key, offset);
+    auto res = config_manager_.updateCommitOffset(key, offset);
     error->set_code(res.code());
     error->set_msg(res.msg());
 

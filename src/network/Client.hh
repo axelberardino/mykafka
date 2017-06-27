@@ -19,7 +19,7 @@ namespace Network
   {
   public:
     /*!
-    ** Intialize a client network.
+    ** Initialize a client network.
     **
     ** @param address The server + port (server:port)
     ** @param client_connection_timeout Timeout for a query.
@@ -41,7 +41,7 @@ namespace Network
     **
     ** @return grpc::ok on succeed.
     */
-    grpc::Status sendMessage(mykafka::SendMessageRequest request,
+    grpc::Status sendMessage(mykafka::SendMessageRequest& request,
                              mykafka::SendMessageResponse& response);
 
     /*!
@@ -52,8 +52,52 @@ namespace Network
     **
     ** @return grpc::ok on succeed.
     */
-    grpc::Status getMessage(mykafka::GetMessageRequest request,
+    grpc::Status getMessage(mykafka::GetMessageRequest& request,
                             mykafka::GetMessageResponse& response);
+
+    /*!
+    ** Create a topic/partition.
+    **
+    ** @param request The topic/partition.
+    ** @param response The server's answer.
+    **
+    ** @return grpc::ok on succeed.
+    */
+    grpc::Status createPartition(mykafka::TopicPartitionRequest& request,
+                                 mykafka::Error& response);
+
+    /*!
+    ** Delete a topic/partition.
+    **
+    ** @param request The topic/partition.
+    ** @param response The server's answer.
+    **
+    ** @return grpc::ok on succeed.
+    */
+    grpc::Status deletePartition(mykafka::TopicPartitionRequest& request,
+                                 mykafka::Error& response);
+
+    /*!
+    ** Delete a topic.
+    **
+    ** @param request The topic.
+    ** @param response The server's answer.
+    **
+    ** @return grpc::ok on succeed.
+    */
+    grpc::Status deleteTopic(mykafka::TopicPartitionRequest& request,
+                             mykafka::Error& response);
+
+    /*!
+    ** Get info about a broker.
+    **
+    ** @param request The topic.
+    ** @param response The server's answer.
+    **
+    ** @return grpc::ok on succeed.
+    */
+    grpc::Status brokerInfo(mykafka::Void& request,
+                            mykafka::BrokerInfoResponse& response);
 
   private:
     const std::string address_;

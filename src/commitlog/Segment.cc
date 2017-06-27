@@ -203,6 +203,10 @@ namespace CommitLog
   mykafka::Error
   Segment::close()
   {
+    // Already closed!
+    if (fd_ < 0)
+      return Utils::err(mykafka::Error::OK);
+
     if (::close(fd_) < 0)
       return Utils::err(mykafka::Error::FILE_ERROR,
                         "Can't close log file " + filename_ + "!");

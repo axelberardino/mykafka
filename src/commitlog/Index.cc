@@ -123,6 +123,10 @@ namespace CommitLog
   mykafka::Error
   Index::close()
   {
+    // Already closed!
+    if (fd_ < 0)
+      return Utils::err(mykafka::Error::OK);
+
     //    sync(); // FIXME : Cost a lost but could be mandatory.
     if (munmap(addr_, size_) < 0)
       return Utils::err(mykafka::Error::FILE_ERROR, "Can't unmap index " + filename_ + "!");

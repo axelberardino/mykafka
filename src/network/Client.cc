@@ -21,7 +21,7 @@ namespace Network
   }
 
   grpc::Status
-  Client::sendMessage(mykafka::SendMessageRequest request,
+  Client::sendMessage(mykafka::SendMessageRequest& request,
                       mykafka::SendMessageResponse& response)
   {
     grpc::ClientContext context;
@@ -41,7 +41,7 @@ namespace Network
   }
 
   grpc::Status
-  Client::getMessage(mykafka::GetMessageRequest request,
+  Client::getMessage(mykafka::GetMessageRequest& request,
                      mykafka::GetMessageResponse& response)
   {
     grpc::ClientContext context;
@@ -57,6 +57,58 @@ namespace Network
       std::cout << "Reconnect " << (res ? "succeed!" : "failed!") << std::endl;
     }
 
+    return status;
+  }
+
+  grpc::Status
+  Client::createPartition(mykafka::TopicPartitionRequest& request,
+                          mykafka::Error& response)
+  {
+    grpc::ClientContext context;
+    if (client_connection_timeout_ > 0)
+      context.set_deadline(std::chrono::system_clock::now() +
+                           std::chrono::milliseconds(client_connection_timeout_));
+
+    grpc::Status status = stub_->CreatePartition(&context, request, &response);
+    return status;
+  }
+
+  grpc::Status
+  Client::deletePartition(mykafka::TopicPartitionRequest& request,
+                          mykafka::Error& response)
+  {    grpc::ClientContext context;
+    if (client_connection_timeout_ > 0)
+      context.set_deadline(std::chrono::system_clock::now() +
+                           std::chrono::milliseconds(client_connection_timeout_));
+
+    grpc::Status status = stub_->DeletePartition(&context, request, &response);
+    return status;
+  }
+
+  grpc::Status
+  Client::deleteTopic(mykafka::TopicPartitionRequest& request,
+                      mykafka::Error& response)
+  {
+    grpc::ClientContext context;
+    if (client_connection_timeout_ > 0)
+      context.set_deadline(std::chrono::system_clock::now() +
+                           std::chrono::milliseconds(client_connection_timeout_));
+
+    grpc::Status status = stub_->DeleteTopic(&context, request, &response);
+    return status;
+  }
+
+
+  grpc::Status
+  Client::brokerInfo(mykafka::Void& request,
+                     mykafka::BrokerInfoResponse& response)
+  {
+    grpc::ClientContext context;
+    if (client_connection_timeout_ > 0)
+      context.set_deadline(std::chrono::system_clock::now() +
+                           std::chrono::milliseconds(client_connection_timeout_));
+
+    grpc::Status status = stub_->BrokerInfo(&context, request, &response);
     return status;
   }
 } // Network

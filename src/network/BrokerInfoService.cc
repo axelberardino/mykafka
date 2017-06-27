@@ -19,6 +19,7 @@ namespace Network
   BrokerInfoService::process()
   {
     new BrokerInfoService(broker_, service_, cq_);
+    std::cout << "Ask for broker info" << std::endl;
     broker_.getTopicInfo(request_, response_);
     responder_.Finish(response_, grpc::Status::OK, this);
   }
