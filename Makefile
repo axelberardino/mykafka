@@ -1,5 +1,7 @@
 CXX = g++
-CXXFLAGS += -I/usr/local/include -I./protos/ -I./src/ -pthread -W -Wall -std=c++11 -O0 -g -ggdb
+CXXFLAGS += -I/usr/local/include -I./protos/ -I./src/ -pthread -W -Wall -std=c++11
+#CXXFLAGS += -O0 -g -ggdb
+CXXFLAGS += -O3
 LDFLAGS += -L/usr/local/lib `pkg-config --libs grpc++ grpc`       \
            -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed \
            -lprotobuf -lpthread -ldl -lboost_system -lboost_thread \

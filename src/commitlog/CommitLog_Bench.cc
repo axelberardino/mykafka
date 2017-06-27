@@ -5,7 +5,7 @@
 #include <boost/filesystem.hpp>
 
 #include "commitlog/Partition.hh"
-#include "commitlog/Utils.hh"
+#include "utils/Utils.hh"
 #include "boost_test_helper.hh"
 
 #include <inttypes.h>
@@ -138,7 +138,6 @@ namespace
     CommitLog::Partition partition(dir, segment_size, 0, 0);
     auto res = partition.open();
     BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
-
 
     auto start = std::chrono::system_clock::now();
 
