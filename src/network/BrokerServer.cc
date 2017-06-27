@@ -1,6 +1,8 @@
 #include "network/BrokerServer.hh"
 #include "network/SendMessageService.hh"
 #include "network/GetMessageService.hh"
+#include "network/GetOffsetsService.hh"
+#include "network/BrokerInfoService.hh"
 
 #include <thread>
 #include <vector>
@@ -23,5 +25,7 @@ namespace Network
   {
     new SendMessageService(broker_, service_, cq_.get());
     new GetMessageService(broker_, service_, cq_.get());
+    new GetOffsetsService(broker_, service_, cq_.get());
+    new BrokerInfoService(broker_, service_, cq_.get());
   }
 } // Network

@@ -9,6 +9,7 @@
 #include "boost_test_helper.hh"
 
 #include <inttypes.h>
+#include <thread>
 #include <array>
 
 namespace
@@ -334,22 +335,21 @@ BOOST_AUTO_TEST_CASE(test_parallel_read_write)
   auto res = broker.load();
   BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());
 
-  writeFrom(broker, topic, partition, "some data", 10);
-  readFrom(broker, topic, partition, 0, 10);
+  writeFrom(broker, topic, partition, "some data", 200);
+  readFrom(broker, topic, partition, 0, 200);
 
-  // std::vector<std::thread> threads;
-  // writeFrom(partition, 200);
-  // for (int i = 0; i < 4; ++i)
-  // {
-  //   threads.emplace_back(std::thread([&partition]() {
-  //         writeFrom(partition, 200, false);
-  //       }));
-  //   threads.emplace_back(std::thread([&partition]() {
-  //         readFrom(partition, 200);
-  //       }));
-  // }
-  // for (auto& thread : threads)
-  //   thread.join();
+  std::vector<std::thread> threads;
+  for (int i = 0; i < 4; ++i)
+  {
+    threads.emplace_back(std::thread([&]() {
+          writeFrom(broker, topic, partition, "some data", 200);
+        }));
+    threads.emplace_back(std::thread([&]() {
+          readFrom(broker, topic, partition, 0, 200);
+        }));
+  }
+  for (auto& thread : threads)
+    thread.join();
 
   res = broker.close();
   BOOST_CHECK_EQUAL_MSG(res.code(), mykafka::Error::OK, res.msg());

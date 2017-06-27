@@ -29,6 +29,8 @@ SOURCES = \
 	$(SRC_PATH)/network/RpcService.cc \
 	$(SRC_PATH)/network/GetMessageService.cc \
 	$(SRC_PATH)/network/SendMessageService.cc \
+	$(SRC_PATH)/network/GetOffsetsService.cc \
+	$(SRC_PATH)/network/BrokerInfoService.cc \
 	$(SRC_PATH)/broker/Broker.cc
 
 HEADERS = $(SOURCES:.cc=.hh)
