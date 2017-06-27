@@ -5,7 +5,7 @@ sudo aptitude install \
      libgtest-dev clang libc++-dev automake wbritish \
      libboost-test-dev libboost-mutex-dev \
      libboost-system-dev libboost-thread-dev \
-     libboost-filesystem-dev libboost-program-options-dev &&\
+     libboost-filesystem-dev libboost-program-options-dev doxygen &&\
 git clone -b $(curl -L http://grpc.io/release) https://github.com/grpc/grpc && \
 cd grpc && \
 git submodule update --init && \
