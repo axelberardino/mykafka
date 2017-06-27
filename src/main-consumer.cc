@@ -1,4 +1,5 @@
 #include "network/Client.hh"
+#include "ClientHelpers.hh"
 
 #include <iostream>
 #include <inttypes.h>
@@ -24,7 +25,7 @@ int main(int argc, char** argv)
     ("broker-address",
      po::value<std::string>(&address)->default_value("localhost:9000"), "Set the broker address")
     ("topic", po::value<std::string>(&topic)->default_value("default"), "Set the topic")
-    ("offset", po::value<int64_t>(&offset)->default_value(0), "Set the starting offset")
+    ("offset", po::value<int64_t>(&offset)->default_value(-1), "Set the starting offset (-1 deduce start)")
     ("nb_offset", po::value<int64_t>(&nb_offset)->default_value(0),
      "Set the max number of offset to read (0 = no limit)")
     ("partition", po::value<int32_t>(&partition)->default_value(0), "Set the partition")
@@ -36,12 +37,31 @@ int main(int argc, char** argv)
 
   if (vm.count("help"))
   {
-    std::cout << "Usage: cat file | " << argv[0] << "\n"
-              << desc << std::endl;
+    std::cout << desc << std::endl;
     return 1;
   }
 
+  CHECK_TOPIC;
+  CHECK_PARTITION;
+
   Network::Client client(address);
+  if (offset < 0)
+  {
+    mykafka::GetOffsetsRequest request;
+    mykafka::GetOffsetsResponse response;
+    request.set_topic(topic);
+    request.set_partition(partition);
+
+    auto res = client.getOffsets(request, response);
+    CHECK_ERROR("get offsets", response.error().code(), response.error().msg());
+
+    std::cout << "First offset: " << response.first_offset()
+              << ", commit_offset: " << response.commit_offset()
+              << ", last_offset: " << response.last_offset()
+              << std::endl;
+    offset = response.first_offset();
+  }
+
   std::cout << "Start to receive from " << address << std::endl;
 
   bool stop = false;

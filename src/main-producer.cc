@@ -1,4 +1,5 @@
 #include "network/Client.hh"
+#include "ClientHelpers.hh"
 
 #include <iostream>
 #include <inttypes.h>
@@ -34,6 +35,9 @@ int main(int argc, char** argv)
               << desc << std::endl;
     return 1;
   }
+
+  CHECK_TOPIC;
+  CHECK_PARTITION;
 
   Network::Client client(address);
   std::cout << "Start to send to " << address << std::endl;

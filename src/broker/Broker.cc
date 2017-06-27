@@ -325,7 +325,7 @@ namespace Broker
           << ", oldestOffset: " << entry.second.partition->oldestOffset()
           << ", size: " << entry.second.partition->physicalSize()
           << std::endl;
-    std::cout << "== Config ==\n";
+    out << "== Config ==\n";
     config_manager_.dump(out);
   }
 } // Broker

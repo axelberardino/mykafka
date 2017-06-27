@@ -1,4 +1,5 @@
 #include "network/Client.hh"
+#include "ClientHelpers.hh"
 
 #include <iostream>
 #include <inttypes.h>
@@ -8,40 +9,6 @@
 #include <boost/program_options/variables_map.hpp>
 
 namespace po = boost::program_options;
-
-#define CHECK_TOPIC                                     \
-  do {                                                  \
-    if (topic.empty())                                  \
-    {                                                   \
-      std::cout << "Invalid topic!" << std::endl;       \
-      return 2;                                         \
-    }                                                   \
-  } while (0)
-
-#define CHECK_PARTITION                                 \
-  do {                                                  \
-    if (partition < 0)                                  \
-    {                                                   \
-      std::cout << "Invalid partition!" << std::endl;   \
-      return 3;                                         \
-    }                                                   \
-  } while (0)
-
-#define CHECK_ERROR(X, Code, Msg)                               \
-  do {                                                          \
-    if (!res.ok())                                              \
-    {                                                           \
-      std::cout << "Can't " X ": " << res.error_code()          \
-                << ": " << res.error_message() << std::endl;    \
-      return 5;                                                 \
-    }                                                           \
-    if (Code != mykafka::Error::OK)                             \
-    {                                                           \
-      std::cout << Code                                         \
-                << ": " << Msg << std::endl;                    \
-      return 6;                                                 \
-    }                                                           \
-  } while (0)                                                   \
 
 int main(int argc, char** argv)
 {
