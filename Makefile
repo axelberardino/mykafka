@@ -135,6 +135,7 @@ doc/refman.pdf:
 doc: doc/refman.pdf
 
 demo:
+	@./demo/demo.sh
 
 clean:
 	rm -f Makefile.deps $(PROTOS_PATH)/*.cc $(PROTOS_PATH)/*.h
@@ -146,8 +147,8 @@ distclean: clean
 PROTOC_CMD = which $(PROTOC)
 PROTOC_CHECK_CMD = $(PROTOC) --version | grep -q libprotoc.3
 PLUGIN_CHECK_CMD = which $(GRPC_CPP_PLUGIN)
-TEST_DIR_CHECK_CMD = stat $(TEST_PATH)
-TEST_OUTPUT_DIR_CHECK_CMD = stat $(TEST_OUTPUT_PATH)
+TEST_DIR_CHECK_CMD = stat $(TEST_PATH) &> /dev/null
+TEST_OUTPUT_DIR_CHECK_CMD = stat $(TEST_OUTPUT_PATH) &> /dev/null
 HAS_PROTOC = $(shell $(PROTOC_CMD) > /dev/null && echo true || echo false)
 ifeq ($(HAS_PROTOC),true)
 HAS_VALID_PROTOC = $(shell $(PROTOC_CHECK_CMD) 2> /dev/null && echo true || echo false)

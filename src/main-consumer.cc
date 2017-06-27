@@ -13,11 +13,12 @@ namespace po = boost::program_options;
 
 int main(int argc, char** argv)
 {
-  std::string address;
-  std::string topic;
+  bool stop_no_msg;
   int32_t partition;
   int64_t offset;
   int64_t nb_offset;
+  std::string address;
+  std::string topic;
 
   po::options_description desc("Kafka consumer");
   desc.add_options()
@@ -29,6 +30,7 @@ int main(int argc, char** argv)
     ("nb_offset", po::value<int64_t>(&nb_offset)->default_value(0),
      "Set the max number of offset to read (0 = no limit)")
     ("partition", po::value<int32_t>(&partition)->default_value(0), "Set the partition")
+    ("stop-if-no-message", po::value<bool>(&stop_no_msg)->default_value(false), "Stop if no message left")
     ;
 
   po::variables_map vm;
@@ -85,8 +87,13 @@ int main(int argc, char** argv)
         break;
       case mykafka::Error::NO_MESSAGE:
         {
-          std::cout << "No message to fetch, waiting 2 sec..." << std::endl;
-          std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+          if (!stop_no_msg)
+          {
+            std::cout << "No message to fetch, waiting 2 sec..." << std::endl;
+            std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+          }
+          else
+            stop = true;
         }
         break;
       default:
