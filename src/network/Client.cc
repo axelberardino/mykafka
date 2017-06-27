@@ -2,6 +2,30 @@
 
 #include <chrono>
 
+#define METHOD_IMPL(SERVICE)                                            \
+  do {                                                                  \
+    grpc::ClientContext context;                                        \
+    if (client_connection_timeout_ > 0)                                 \
+      context.set_deadline(std::chrono::system_clock::now() +           \
+                           std::chrono::milliseconds(client_connection_timeout_)); \
+                                                                        \
+    grpc::Status status = stub_->SERVICE(&context, request, &response); \
+    while (try_reconnect && !status.ok())                               \
+    {                                                                   \
+      std::cout << "Connection lost, try to reconnect..." << std::endl; \
+      const bool res = reconnect();                                     \
+      std::cout << "Reconnect " << (res ? "succeed!" : "failed!") << std::endl; \
+      grpc::ClientContext context;                                      \
+      if (client_connection_timeout_ > 0)                               \
+        context.set_deadline(std::chrono::system_clock::now() +         \
+                             std::chrono::milliseconds(client_connection_timeout_)); \
+      status = stub_->SERVICE(&context, request, &response);            \
+    }                                                                   \
+                                                                        \
+    return status;                                                      \
+  } while (0)
+
+
 namespace Network
 {
   Client::Client(std::string address, int64_t client_connection_timeout)
@@ -22,105 +46,57 @@ namespace Network
 
   grpc::Status
   Client::sendMessage(mykafka::SendMessageRequest& request,
-                      mykafka::SendMessageResponse& response)
+                      mykafka::SendMessageResponse& response,
+                      bool try_reconnect)
   {
-    grpc::ClientContext context;
-    if (client_connection_timeout_ > 0)
-      context.set_deadline(std::chrono::system_clock::now() +
-                           std::chrono::milliseconds(client_connection_timeout_));
-
-    grpc::Status status = stub_->SendMessage(&context, request, &response);
-    if (!status.ok())
-    {
-      std::cout << "Connection lost, try to reconnect..." << std::endl;
-      const bool res = reconnect();
-      std::cout << "Reconnect " << (res ? "succeed!" : "failed!") << std::endl;
-    }
-
-    return status;
+    METHOD_IMPL(SendMessage);
   }
 
   grpc::Status
   Client::getMessage(mykafka::GetMessageRequest& request,
-                     mykafka::GetMessageResponse& response)
+                     mykafka::GetMessageResponse& response,
+                     bool try_reconnect)
   {
-    grpc::ClientContext context;
-    if (client_connection_timeout_ > 0)
-      context.set_deadline(std::chrono::system_clock::now() +
-                           std::chrono::milliseconds(client_connection_timeout_));
-
-    grpc::Status status = stub_->GetMessage(&context, request, &response);
-    if (!status.ok())
-    {
-      std::cout << "Connection lost, try to reconnect..." << std::endl;
-      const bool res = reconnect();
-      std::cout << "Reconnect " << (res ? "succeed!" : "failed!") << std::endl;
-    }
-
-    return status;
+    METHOD_IMPL(GetMessage);
   }
 
   grpc::Status
   Client::createPartition(mykafka::TopicPartitionRequest& request,
-                          mykafka::Error& response)
+                          mykafka::Error& response,
+                          bool try_reconnect)
   {
-    grpc::ClientContext context;
-    if (client_connection_timeout_ > 0)
-      context.set_deadline(std::chrono::system_clock::now() +
-                           std::chrono::milliseconds(client_connection_timeout_));
-
-    grpc::Status status = stub_->CreatePartition(&context, request, &response);
-    return status;
+    METHOD_IMPL(CreatePartition);
   }
 
   grpc::Status
   Client::deletePartition(mykafka::TopicPartitionRequest& request,
-                          mykafka::Error& response)
-  {    grpc::ClientContext context;
-    if (client_connection_timeout_ > 0)
-      context.set_deadline(std::chrono::system_clock::now() +
-                           std::chrono::milliseconds(client_connection_timeout_));
-
-    grpc::Status status = stub_->DeletePartition(&context, request, &response);
-    return status;
+                          mykafka::Error& response,
+                          bool try_reconnect)
+  {
+    METHOD_IMPL(DeletePartition);
   }
 
   grpc::Status
   Client::deleteTopic(mykafka::TopicPartitionRequest& request,
-                      mykafka::Error& response)
+                      mykafka::Error& response,
+                      bool try_reconnect)
   {
-    grpc::ClientContext context;
-    if (client_connection_timeout_ > 0)
-      context.set_deadline(std::chrono::system_clock::now() +
-                           std::chrono::milliseconds(client_connection_timeout_));
-
-    grpc::Status status = stub_->DeleteTopic(&context, request, &response);
-    return status;
+    METHOD_IMPL(DeleteTopic);
   }
 
   grpc::Status
   Client::getOffsets(mykafka::GetOffsetsRequest& request,
-                     mykafka::GetOffsetsResponse& response)
+                     mykafka::GetOffsetsResponse& response,
+                     bool try_reconnect)
   {
-    grpc::ClientContext context;
-    if (client_connection_timeout_ > 0)
-      context.set_deadline(std::chrono::system_clock::now() +
-                           std::chrono::milliseconds(client_connection_timeout_));
-
-    grpc::Status status = stub_->GetOffsets(&context, request, &response);
-    return status;
+    METHOD_IMPL(GetOffsets);
   }
 
   grpc::Status
   Client::brokerInfo(mykafka::Void& request,
-                     mykafka::BrokerInfoResponse& response)
+                     mykafka::BrokerInfoResponse& response,
+                     bool try_reconnect)
   {
-    grpc::ClientContext context;
-    if (client_connection_timeout_ > 0)
-      context.set_deadline(std::chrono::system_clock::now() +
-                           std::chrono::milliseconds(client_connection_timeout_));
-
-    grpc::Status status = stub_->BrokerInfo(&context, request, &response);
-    return status;
+    METHOD_IMPL(BrokerInfo);
   }
 } // Network

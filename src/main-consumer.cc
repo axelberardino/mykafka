@@ -52,7 +52,7 @@ int main(int argc, char** argv)
     request.set_topic(topic);
     request.set_partition(partition);
 
-    auto res = client.getOffsets(request, response);
+    auto res = client.getOffsets(request, response, true);
     CHECK_ERROR("get offsets", response.error().code(), response.error().msg());
 
     std::cout << "First offset: " << response.first_offset()
@@ -72,7 +72,7 @@ int main(int argc, char** argv)
     request.set_topic(topic);
     request.set_partition(partition);
     request.set_offset(offset);
-    auto res = client.getMessage(request, response);
+    auto res = client.getMessage(request, response, true);
     if (res.ok())
       std::cout << "Payload at offset " << offset << ": " << response.payload() << std::endl;
     else
@@ -81,6 +81,7 @@ int main(int argc, char** argv)
     switch (response.error().code())
     {
       case mykafka::Error::OK:
+        ++offset;
         break;
       case mykafka::Error::NO_MESSAGE:
         {
@@ -95,7 +96,6 @@ int main(int argc, char** argv)
           stop = true;
         }
     };
-    ++offset;
     if (nb_offset > 0 && offset >= nb_offset)
       stop = true;
   }

@@ -49,7 +49,7 @@ int main(int argc, char** argv)
       request.set_topic(topic);
       request.set_partition(partition);
       request.set_payload(line);
-      auto res = client.sendMessage(request, response);
+      auto res = client.sendMessage(request, response, true);
       if (res.ok())
         std::cout << "Payload written at offset " << response.offset() << std::endl;
       else

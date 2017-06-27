@@ -38,77 +38,91 @@ namespace Network
     **
     ** @param request The message containing the payload.
     ** @param response The server's answer.
+    ** @param try_reconnect Try to reconnect.
     **
     ** @return grpc::ok on succeed.
     */
     grpc::Status sendMessage(mykafka::SendMessageRequest& request,
-                             mykafka::SendMessageResponse& response);
+                             mykafka::SendMessageResponse& response,
+                             bool try_reconnect = false);
 
     /*!
     ** Get a payload from a given offset.
     **
     ** @param request The message containing the offset.
     ** @param response The server's answer.
+    ** @param try_reconnect Try to reconnect.
     **
     ** @return grpc::ok on succeed.
     */
     grpc::Status getMessage(mykafka::GetMessageRequest& request,
-                            mykafka::GetMessageResponse& response);
+                            mykafka::GetMessageResponse& response,
+                            bool try_reconnect = false);
 
     /*!
     ** Create a topic/partition.
     **
     ** @param request The topic/partition.
     ** @param response The server's answer.
+    ** @param try_reconnect Try to reconnect.
     **
     ** @return grpc::ok on succeed.
     */
     grpc::Status createPartition(mykafka::TopicPartitionRequest& request,
-                                 mykafka::Error& response);
+                                 mykafka::Error& response,
+                                 bool try_reconnect = false);
 
     /*!
     ** Delete a topic/partition.
     **
     ** @param request The topic/partition.
     ** @param response The server's answer.
+    ** @param try_reconnect Try to reconnect.
     **
     ** @return grpc::ok on succeed.
     */
     grpc::Status deletePartition(mykafka::TopicPartitionRequest& request,
-                                 mykafka::Error& response);
+                                 mykafka::Error& response,
+                                 bool try_reconnect = false);
 
     /*!
     ** Delete a topic.
     **
     ** @param request The topic.
     ** @param response The server's answer.
+    ** @param try_reconnect Try to reconnect.
     **
     ** @return grpc::ok on succeed.
     */
     grpc::Status deleteTopic(mykafka::TopicPartitionRequest& request,
-                             mykafka::Error& response);
+                             mykafka::Error& response,
+                             bool try_reconnect = false);
 
     /*!
     ** Get offsets of a topic/partition.
     **
     ** @param request The topic/partition.
     ** @param response The server's answer.
+    ** @param try_reconnect Try to reconnect.
     **
     ** @return grpc::ok on succeed.
     */
     grpc::Status getOffsets(mykafka::GetOffsetsRequest& request,
-                            mykafka::GetOffsetsResponse& response);
+                            mykafka::GetOffsetsResponse& response,
+                            bool try_reconnect = false);
 
     /*!
     ** Get info about a broker.
     **
     ** @param request The topic.
     ** @param response The server's answer.
+    ** @param try_reconnect Try to reconnect.
     **
     ** @return grpc::ok on succeed.
     */
     grpc::Status brokerInfo(mykafka::Void& request,
-                            mykafka::BrokerInfoResponse& response);
+                            mykafka::BrokerInfoResponse& response,
+                            bool try_reconnect = false);
 
   private:
     const std::string address_;

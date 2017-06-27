@@ -28,7 +28,7 @@ int main(int argc, char** argv)
     ("action", po::value<std::string>(&action)->default_value("info"), "Action: create, delete, info, offsets")
     ("topic", po::value<std::string>(&topic)->default_value(""), "Set the topic")
     ("partition", po::value<int32_t>(&partition)->default_value(-1), "Set the partition")
-    ("sement-size", po::value<int64_t>(&max_segment_size)->default_value(4096 * 1024),
+    ("segment-size", po::value<int64_t>(&max_segment_size)->default_value(4096 * 1024),
      "Set the segment size (4 Mo by default)")
     ("partition-size", po::value<int64_t>(&max_partition_size)->default_value(0),
      "Set the partition max size (0 = no max limit). Older segment will be destroy.")
