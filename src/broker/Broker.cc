@@ -34,10 +34,10 @@ namespace Broker
       return res;
 
     auto& entry = topics_[{topic, partition_id}];
-    entry.leader_id = 0; // FIXME
-    entry.preferred_leader_id = 0; // FIXME
-    entry.replicas.clear(); // FIXME
-    entry.isr.clear(); // FIXME
+    entry.leader_id = 0; // Not used
+    entry.preferred_leader_id = 0; // Not used
+    entry.replicas.clear(); // Not used
+    entry.isr.clear(); // Not used
     entry.partition = partition;
 
     return Utils::err(mykafka::Error::OK);
@@ -73,24 +73,21 @@ namespace Broker
   mykafka::Error
   Broker::createPartition(mykafka::TopicPartitionRequest& request)
   {
-    //    {
-      boost::lock_guard<boost::shared_mutex> lock(mutex_);
+    boost::lock_guard<boost::shared_mutex> lock(mutex_);
 
-      const std::string key = request.topic() + "-" + std::to_string(request.partition());
-      auto found = topics_.find({request.topic(), request.partition()});
-      if (found != topics_.cend())
-        return Utils::err(mykafka::Error::TOPIC_ERROR,
-                          "The topic/partition " + key + " already exists!");
+    const std::string key = request.topic() + "-" + std::to_string(request.partition());
+    auto found = topics_.find({request.topic(), request.partition()});
+    if (found != topics_.cend())
+      return Utils::err(mykafka::Error::TOPIC_ERROR,
+                        "The topic/partition " + key + " already exists!");
 
-      auto res = createAndAddNewPartition(base_path_ + "/" + key,
-                                          request.topic(), request.partition(),
-                                          request.max_segment_size(),
-                                          request.max_partition_size(),
-                                          request.segment_ttl());
-      if (res.code() != mykafka::Error::OK)
-        return res;
-
-      //    }
+    auto res = createAndAddNewPartition(base_path_ + "/" + key,
+                                        request.topic(), request.partition(),
+                                        request.max_segment_size(),
+                                        request.max_partition_size(),
+                                        request.segment_ttl());
+    if (res.code() != mykafka::Error::OK)
+      return res;
 
     return config_manager_.create({request.topic(), request.partition()},
                                   request.max_segment_size(),
@@ -101,24 +98,20 @@ namespace Broker
   mykafka::Error
   Broker::deletePartition(mykafka::TopicPartitionRequest& request)
   {
-    //    {
-      boost::lock_guard<boost::shared_mutex> lock(mutex_);
+    boost::lock_guard<boost::shared_mutex> lock(mutex_);
 
-      const std::string key = request.topic() + "-" + std::to_string(request.partition());
-      auto found = topics_.find({request.topic(), request.partition()});
-      if (found == topics_.cend())
-        return Utils::err(mykafka::Error::TOPIC_ERROR,
-                          "The topic " + key + " don't exists!");
+    const std::string key = request.topic() + "-" + std::to_string(request.partition());
+    auto found = topics_.find({request.topic(), request.partition()});
+    if (found == topics_.cend())
+      return Utils::err(mykafka::Error::TOPIC_ERROR,
+                        "The topic " + key + " don't exists!");
 
-      //auto res = found->second.partition->deletePartition();
-      auto res = found->second.partition->close();
-      if (res.code() != mykafka::Error::OK)
-        return res;
-      topics_.erase(found);
-      //    }
+    auto res = found->second.partition->deletePartition();
+    if (res.code() != mykafka::Error::OK)
+      return res;
+    topics_.erase(found);
 
-      return Utils::err(mykafka::Error::OK);
-      //    return config_manager_.remove({request.topic(), request.partition()});
+    return Utils::err(mykafka::Error::OK);
   }
 
   mykafka::Error
@@ -219,10 +212,6 @@ namespace Broker
       return;
     }
 
-
-    // FIXME boost::shared_lock<boost::shared_mutex> lock(mutex_);
-    // FIXME boost::lock_guard<boost::shared_mutex> lock(mutex_);
-
     const std::string strkey = request.topic() + "-" + std::to_string(request.partition());
     auto found = topics_.find(key);
     if (found == topics_.cend())
@@ -237,11 +226,6 @@ namespace Broker
     error->set_code(res.code());
     error->set_msg(res.msg());
     response.set_payload(std::string(payload.begin(), payload.end()));
-
-
-    // FIXME debug
-    // error->set_code(mykafka::Error::OK);
-    // response.set_payload("some data");
   }
 
   void
@@ -254,9 +238,6 @@ namespace Broker
     auto error = response.mutable_error();
     int64_t offset = 0;
     {
-      //boost::lock_guard<boost::shared_mutex> lock(mutex_);
-      //boost::shared_lock<boost::shared_mutex> lock(mutex_);
-
       const std::string strkey = request.topic() + "-" + std::to_string(request.partition());
       auto found = topics_.find(key);
       if (found == topics_.cend())
