@@ -7,7 +7,7 @@ if [ "$cur_dir" = "demo" ]; then
 fi
 source "${prefix}/utils.sh" &>/dev/null
 
-title "SIMPLE PRODUCER-CONSUMER"
+title "ONE PRODUCER - MANY CONSUMERS"
 echo
 
 section "Clean folder $DATA_DIR"
@@ -31,7 +31,7 @@ launch "cat /usr/share/dict/british-english | ./$PRODUCER --topic test_topic --p
 text "Inserted $(cat /usr/share/dict/british-english | wc -l) words!"
 tail -n 10 $LOG_DIR/producer.log
 
-section "Launch consumer, to get the words, please wait..."
+section "Launch consumer, to ge the words, please wait..."
 launch "./$CONSUMER --topic=test_topic --partition=1 --stop-if-no-message=true" "$LOG_DIR/consumer.log"
 text "Execution finished"
 tail -n 10 $LOG_DIR/consumer.log

@@ -1,16 +1,9 @@
 #!/bin/bash
 
 BASE_DIR=/tmp/mykafka-demo
-DEMOS="simple-producer-consumer.sh"
+DEMOS="simple-producer-consumer.sh one-producer-many-consumers.sh"
 
-finish()
-{
-    trap - SIGTERM # Disable sigterm trap to avoid signal recursion
-    kill 0
-}
-trap "exit 0" SIGTERM
-trap finish 0 1 2 3 13 # EXIT HUP INT QUIT PIPE
-
+trap "echo" SIGTERM
 
 echo -e "\033[31;1m"
 echo "  _____  ______ __  __  ____  "
@@ -30,4 +23,5 @@ fi
 
 for demo in $DEMOS; do
     ./${prefix}/${demo} "$BASE_DIR"
+    read -p "Press enter to start the next demo"
 done
