@@ -27,6 +27,22 @@ namespace po = boost::program_options;
     }                                                   \
   } while (0)
 
+#define CHECK_ERROR(X, Code, Msg)                               \
+  do {                                                          \
+    if (!res.ok())                                              \
+    {                                                           \
+      std::cout << "Can't " X ": " << res.error_code()          \
+                << ": " << res.error_message() << std::endl;    \
+      return 5;                                                 \
+    }                                                           \
+    if (Code != mykafka::Error::OK)                             \
+    {                                                           \
+      std::cout << Code                                         \
+                << ": " << Msg << std::endl;                    \
+      return 6;                                                 \
+    }                                                           \
+  } while (0)                                                   \
+
 int main(int argc, char** argv)
 {
   int32_t partition;
@@ -65,12 +81,10 @@ int main(int argc, char** argv)
     request.set_topic(topic);
     request.set_partition(partition);
     auto res = client.createPartition(request, response);
-    if (res.ok())
-      std::cout << "Partition " << topic << "/"
-                << partition << " created!" << std::endl;
-    else
-      std::cout << "Can't create partition: " << res.error_code()
-                << ": " << res.error_message() << std::endl;
+    CHECK_ERROR("create partition", response.code(), response.msg());
+
+    std::cout << "Partition " << topic << "/"
+              << partition << " created!" << std::endl;
   }
   else if (action == "delete")
   {
@@ -86,13 +100,28 @@ int main(int argc, char** argv)
       res = client.deleteTopic(request, response);
     else
       res = client.deletePartition(request, response);
+    CHECK_ERROR("delete topic/partition", response.code(), response.msg());
 
-    if (res.ok())
-      std::cout << "Partition " << topic << "/"
-                << partition << " created!" << std::endl;
-    else
-      std::cout << "Can't create partition: " << res.error_code()
-                << ": " << res.error_message() << std::endl;
+    std::cout << "Partition " << topic << "/"
+              << partition << " created!" << std::endl;
+  }
+  else if (action == "offsets")
+  {
+    CHECK_TOPIC;
+    CHECK_PARTITION;
+
+    mykafka::GetOffsetsRequest request;
+    mykafka::GetOffsetsResponse response;
+    request.set_topic(topic);
+    request.set_partition(partition);
+
+    auto res = client.getOffsets(request, response);
+    CHECK_ERROR("get offsets", response.error().code(), response.error().msg());
+
+    std::cout << "First offset: " << response.first_offset()
+              << ", commit_offset: " << response.commit_offset()
+              << ", last_offset: " << response.last_offset()
+              << std::endl;
   }
   else if (action == "info")
   {
@@ -100,11 +129,9 @@ int main(int argc, char** argv)
     mykafka::BrokerInfoResponse response;
 
     auto res = client.brokerInfo(request, response);
-    if (res.ok())
-      std::cout << response.dump() << std::endl;
-    else
-      std::cout << "Can't get info on broker: " << res.error_code()
-                << ": " << res.error_message() << std::endl;
+    CHECK_ERROR("get info", response.error().code(), response.error().msg());
+
+    std::cout << response.dump() << std::endl;
   }
   else
   {

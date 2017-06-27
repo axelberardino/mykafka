@@ -80,7 +80,8 @@ message TopicPartitionRequest
 
 message BrokerInfoResponse
 {
-  string dump = 1;
+  Error error = 1;
+  string dump = 2;
 }
 
 service Broker

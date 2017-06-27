@@ -98,6 +98,18 @@ namespace Network
     return status;
   }
 
+  grpc::Status
+  Client::getOffsets(mykafka::GetOffsetsRequest& request,
+                     mykafka::GetOffsetsResponse& response)
+  {
+    grpc::ClientContext context;
+    if (client_connection_timeout_ > 0)
+      context.set_deadline(std::chrono::system_clock::now() +
+                           std::chrono::milliseconds(client_connection_timeout_));
+
+    grpc::Status status = stub_->GetOffsets(&context, request, &response);
+    return status;
+  }
 
   grpc::Status
   Client::brokerInfo(mykafka::Void& request,

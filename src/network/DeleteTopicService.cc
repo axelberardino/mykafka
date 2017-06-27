@@ -19,6 +19,7 @@ namespace Network
   DeleteTopicService::process()
   {
     new DeleteTopicService(broker_, service_, cq_);
+    std::cout << "Ask to delete topic: " << request_.topic() << std::endl;
     response_ = broker_.deleteTopic(request_);
     responder_.Finish(response_, grpc::Status::OK, this);
   }

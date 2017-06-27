@@ -3,6 +3,9 @@
 #include "network/GetMessageService.hh"
 #include "network/GetOffsetsService.hh"
 #include "network/BrokerInfoService.hh"
+#include "network/CreatePartitionService.hh"
+#include "network/DeletePartitionService.hh"
+#include "network/DeleteTopicService.hh"
 
 #include <thread>
 #include <vector>
@@ -27,5 +30,8 @@ namespace Network
     new GetMessageService(broker_, service_, cq_.get());
     new GetOffsetsService(broker_, service_, cq_.get());
     new BrokerInfoService(broker_, service_, cq_.get());
+    new CreatePartitionService(broker_, service_, cq_.get());
+    new DeletePartitionService(broker_, service_, cq_.get());
+    new DeleteTopicService(broker_, service_, cq_.get());
   }
 } // Network

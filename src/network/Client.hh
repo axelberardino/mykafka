@@ -89,6 +89,17 @@ namespace Network
                              mykafka::Error& response);
 
     /*!
+    ** Get offsets of a topic/partition.
+    **
+    ** @param request The topic/partition.
+    ** @param response The server's answer.
+    **
+    ** @return grpc::ok on succeed.
+    */
+    grpc::Status getOffsets(mykafka::GetOffsetsRequest& request,
+                            mykafka::GetOffsetsResponse& response);
+
+    /*!
     ** Get info about a broker.
     **
     ** @param request The topic.

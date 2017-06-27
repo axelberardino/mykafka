@@ -154,6 +154,9 @@ namespace Broker
     std::ostringstream buff;
     dump(buff);
     response.set_dump(buff.str());
+    auto error = response.mutable_error();
+    error->set_code(mykafka::Error::OK);
+    error->set_msg("");
   }
 
   void
