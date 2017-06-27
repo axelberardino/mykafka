@@ -20,7 +20,11 @@ namespace Network
   {
     new CreatePartitionService(broker_, service_, cq_);
     std::cout << "Ask to create topic/partition: "
-              << request_.topic() << "/" << request_.partition() << std::endl;
+              << request_.topic() << "/" << request_.partition()
+              << " with segment_size: " << request_.max_segment_size()
+              << ", max_partition_size: " << request_.max_partition_size()
+              << ", segment_ttl: " << request_.segment_ttl()
+              << std::endl;
     response_ = broker_.createPartition(request_);
     responder_.Finish(response_, grpc::Status::OK, this);
   }

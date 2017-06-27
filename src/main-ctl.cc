@@ -13,6 +13,9 @@ namespace po = boost::program_options;
 int main(int argc, char** argv)
 {
   int32_t partition;
+  int64_t max_segment_size;
+  int64_t max_partition_size;
+  int64_t segment_ttl;
   std::string address;
   std::string topic;
   std::string action;
@@ -22,9 +25,15 @@ int main(int argc, char** argv)
     ("help", "Produce help message")
     ("broker-address",
      po::value<std::string>(&address)->default_value("localhost:9000"), "Set the broker address")
+    ("action", po::value<std::string>(&action)->default_value("info"), "Action: create, delete, info, offsets")
     ("topic", po::value<std::string>(&topic)->default_value(""), "Set the topic")
     ("partition", po::value<int32_t>(&partition)->default_value(-1), "Set the partition")
-    ("action", po::value<std::string>(&action)->default_value("info"), "Action: create, delete, info, offsets")
+    ("sement-size", po::value<int64_t>(&max_segment_size)->default_value(4096 * 1024),
+     "Set the segment size (4 Mo by default)")
+    ("partition-size", po::value<int64_t>(&max_partition_size)->default_value(0),
+     "Set the partition max size (0 = no max limit). Older segment will be destroy.")
+    ("segment-ttl", po::value<int64_t>(&segment_ttl)->default_value(0),
+     "Set the segment ttl in seconds (0 = no ttl). Segment older than ttl will be destroy.")
     ;
 
   po::variables_map vm;
@@ -47,6 +56,9 @@ int main(int argc, char** argv)
     mykafka::Error response;
     request.set_topic(topic);
     request.set_partition(partition);
+    request.set_max_segment_size(max_segment_size);
+    request.set_max_partition_size(max_partition_size);
+    request.set_segment_ttl(segment_ttl);
     auto res = client.createPartition(request, response);
     CHECK_ERROR("create partition", response.code(), response.msg());
 

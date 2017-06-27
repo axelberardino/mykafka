@@ -96,7 +96,7 @@ int main(int argc, char** argv)
         }
     };
     ++offset;
-    if (offset >= nb_offset)
+    if (nb_offset > 0 && offset >= nb_offset)
       stop = true;
   }
 
