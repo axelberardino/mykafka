@@ -32,9 +32,13 @@ namespace Network
     : address_(address),
       client_connection_timeout_(client_connection_timeout),
       reconnect_timeout_(30 * 1000 /* 30 sec */),
-      channel_(grpc::CreateChannel(address, grpc::InsecureChannelCredentials())),
-      stub_(mykafka::Broker::NewStub(channel_))
+      channel_(),
+      stub_()
   {
+    grpc::ChannelArguments args;
+    args.SetInt(GRPC_ARG_MAX_RECONNECT_BACKOFF_MS, 1000);
+    channel_ = grpc::CreateCustomChannel(address, grpc::InsecureChannelCredentials(), args);
+    stub_ = mykafka::Broker::NewStub(channel_);
   }
 
   bool

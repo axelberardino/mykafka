@@ -10,7 +10,12 @@ trap "exit 1" SIGTERM
 trap finish 0 1 2 3 13 # EXIT HUP INT QUIT PIPE
 
 for i in $(seq 10); do
-    ./mykafka-producer --topic toto --replication 1 &
+    cat /usr/share/dict/british-english | ./mykafka-producer --topic toto --partition 1 &
 done
+
+for i in $(seq 5); do
+    ./mykafka-consumer --topic toto --partition 1 &
+done
+
 
 wait
