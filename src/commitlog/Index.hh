@@ -15,12 +15,14 @@ namespace CommitLog
   ** Store information about segments.
   **
   ** Example:
+  ** @verbatim
   **      001.index                       001.log
   **  offset, position        offset, position, size, payload
   **       0,        0             0,        0,    5, "first"
   **       1,        5             1,        5,    4, "test"
   **       2,        9             2,        9,   20, "{my_payload:content}"
   **       3,       29             3,       29,    2, "xx"
+  ** @endverbatim
   */
   class Index
   {

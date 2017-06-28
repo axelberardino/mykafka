@@ -17,6 +17,7 @@ namespace CommitLog
   ** containing log files (for data) and their index (for fast
   ** direct access).
   **
+  ** @verbatim
   ** For example, a partition "test", could be like that:
   ** /tmp/path/test/
   **   |_______ 00000000000000000000.index
@@ -27,6 +28,7 @@ namespace CommitLog
   **   |_______ 00000000000000000633.log
   **   |_______ 00000000000000000837.index
   **   |_______ 00000000000000000837.log
+  ** @endverbatim
   **
   ** Simple example:
   ** @code

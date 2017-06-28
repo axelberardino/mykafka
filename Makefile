@@ -92,39 +92,39 @@ Makefile.deps: $(ALL_SRC)
 
 $(TEST_PATH)/index-test: $(OBJ) $(SRC_PATH)/commitlog/Index_Test.o
 	$(CXX) $(OBJ) $(SRC_PATH)/commitlog/Index_Test.o $(LDFLAGS) -lboost_unit_test_framework -o $@
-index-test: check-test $(TEST_PATH)/index-test
+index-test: check-test all $(TEST_PATH)/index-test
 	$(TEST_PATH)/$@ --log_level=test_suite
 
 $(TEST_PATH)/segment-test: $(OBJ) $(SRC_PATH)/commitlog/Segment_Test.o
 	$(CXX) $(OBJ) $(SRC_PATH)/commitlog/Segment_Test.o $(LDFLAGS) -lboost_unit_test_framework -o $@
-segment-test: check-test $(TEST_PATH)/segment-test
+segment-test: check-test all $(TEST_PATH)/segment-test
 	$(TEST_PATH)/$@ --log_level=test_suite
 
 $(TEST_PATH)/partition-test: $(OBJ) $(SRC_PATH)/commitlog/Partition_Test.o
 	$(CXX) $(OBJ) $(SRC_PATH)/commitlog/Partition_Test.o $(LDFLAGS) -lboost_unit_test_framework -o $@
-partition-test: check-test $(TEST_PATH)/partition-test
+partition-test: check-test all $(TEST_PATH)/partition-test
 	$(TEST_PATH)/$@ --log_level=test_suite
 
 $(TEST_PATH)/config-manager-test: $(OBJ) $(SRC_PATH)/utils/ConfigManager_Test.o
 	$(CXX) $(OBJ) $(SRC_PATH)/utils/ConfigManager_Test.o $(LDFLAGS) -lboost_unit_test_framework -o $@
-config-manager-test: check-test $(TEST_PATH)/config-manager-test
+config-manager-test: check-test all $(TEST_PATH)/config-manager-test
 	$(TEST_PATH)/$@ --log_level=test_suite
 
 $(TEST_PATH)/broker-test: $(OBJ) $(SRC_PATH)/broker/Broker_Test.o
 	$(CXX) $(OBJ) $(SRC_PATH)/broker/Broker_Test.o $(LDFLAGS) -lboost_unit_test_framework -o $@
-broker-test: check-test $(TEST_PATH)/broker-test
+broker-test: check-test all $(TEST_PATH)/broker-test
 	$(TEST_PATH)/$@ --log_level=test_suite
 
 test: all index-test segment-test partition-test config-manager-test broker-test
 
 $(TEST_PATH)/commitlog-bench: $(OBJ) $(SRC_PATH)/commitlog/CommitLog_Bench.o
 	$(CXX) $(OBJ) $(SRC_PATH)/commitlog/CommitLog_Bench.o $(LDFLAGS) -lboost_unit_test_framework -o $@
-commitlog-bench: check-test $(TEST_PATH)/commitlog-bench
+commitlog-bench: check-test all $(TEST_PATH)/commitlog-bench
 	$(TEST_PATH)/$@ --log_level=test_suite
 
 $(TEST_PATH)/broker-bench: $(OBJ) $(SRC_PATH)/broker/Broker_Bench.o
 	$(CXX) $(OBJ) $(SRC_PATH)/broker/Broker_Bench.o $(LDFLAGS) -o $@
-broker-bench: check-test $(TEST_PATH)/broker-bench
+broker-bench: check-test all $(TEST_PATH)/broker-bench
 	$(TEST_PATH)/$@
 
 bench: commitlog-bench broker-bench
@@ -134,7 +134,7 @@ doc/refman.pdf:
 
 doc: doc/refman.pdf
 
-demo:
+demo: all
 	@./demo/demo.sh
 
 clean:
@@ -144,18 +144,13 @@ clean:
 distclean: clean
 	rm -f $(PRODUCER) $(CONSUMER) $(SERVER) ./test/*
 
-PROTOC_CMD = which $(PROTOC)
-PROTOC_CHECK_CMD = $(PROTOC) --version | grep -q libprotoc.3
-PLUGIN_CHECK_CMD = which $(GRPC_CPP_PLUGIN)
-TEST_DIR_CHECK_CMD = stat $(TEST_PATH)
-TEST_OUTPUT_DIR_CHECK_CMD = stat $(TEST_OUTPUT_PATH)
-HAS_PROTOC = $(shell $(PROTOC_CMD) &> /dev/null && echo true || echo false)
+HAS_PROTOC = $(shell $$(which $(PROTOC)) &>/dev/null && echo true || echo false)
 ifeq ($(HAS_PROTOC),true)
-HAS_VALID_PROTOC = $(shell $(PROTOC_CHECK_CMD) &> /dev/null && echo true || echo false)
+HAS_VALID_PROTOC = $(shell $$($(PROTOC) --version | grep -q libprotoc.3) &>/dev/null && echo true || echo false)
 endif
-HAS_PLUGIN = $(shell $(PLUGIN_CHECK_CMD) &> /dev/null && echo true || echo false)
-HAS_TEST_DIR = $(shell $(TEST_DIR_CHECK_CMD) &> /dev/null && echo true || echo false)
-HAS_TEST_OUTPUT_DIR = $(shell $(TEST_OUTPUT_DIR_CHECK_CMD) &> /dev/null && echo true || echo false)
+HAS_PLUGIN = $(shell $$(which $(GRPC_CPP_PLUGIN)) &>/dev/null && echo true || echo false)
+HAS_TEST_DIR = $(shell $$(stat $(TEST_PATH)) &>/dev/null && echo true || echo false)
+HAS_TEST_OUTPUT_DIR = $(shell $$(stat $(TEST_OUTPUT_PATH)) &>/dev/null && echo true || echo false)
 
 SYSTEM_OK = false
 ifeq ($(HAS_VALID_PROTOC),true)
