@@ -19,19 +19,19 @@ namespace Broker
   **
   ** Topic:bookstore
   **         partition 0:
-  **             commitLog: []
+  **             max_segment_size: 4096
+  **             max_partition_size: 0
+  **             segment_ttl: 0
   **             first_offset: 500
   **             next_offset: 456672
   **             commit_offset: 456652
-  **             is_leader: true
-  **             followers: [localhost:9002,localhost:9003]
   **         partition 1:
-  **             commitLog: []
+  **             max_segment_size: 1024
+  **             max_partition_size: 4096
+  **             segment_ttl: 2 // sec
   **             first_offset: 600
   **             next_offset: 456542
   **             commit_offset: 456438
-  **             is_leader: false
-  **             followers: []
   ** Topic:events
   **         etc...
   */

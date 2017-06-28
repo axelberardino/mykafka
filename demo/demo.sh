@@ -33,8 +33,15 @@ done
 # Test delete topic, while read.
 
 # => demander press -p + htop en "warn"
+# Bien "tuner" le segment size !
 # Test gros bench 1, 1 partition, 8 writer, 16 lecteurs infinis.
 # Test gros bench 2, 8 partitions, * (1 writer, 2 lecteurs infinis).
 
 # 1 writer: max partition size 40 Mo, segsize 4 Mo
 # 1 writer: ttl 1 sec, segsize 1024 * 1024 (1 Mo). Constater qu'il ne reste qu'un seul log
+
+
+# Idees a mettre dans TODO
+#  * Au lieu de recherche binaire, tenter un accès direct
+#    dans index (car offset contigue + base_offset connu)
+

@@ -1,0 +1,8 @@
+TODO
+
+* Au lieu de recherche binaire, tenter un accès direct
+  dans index (car offset contigue + base_offset connu)
+  au niveau de l'index.
+
+* Comparer perfs avec:
+  https://softwaremill.com/mqperf/#kafka
