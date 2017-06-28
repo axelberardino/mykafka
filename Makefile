@@ -143,7 +143,7 @@ clean:
 	find . -name "*.o" | xargs rm -f
 
 distclean: clean
-	rm -f $(PRODUCER) $(CONSUMER) $(SERVER) ./test/*
+	rm -f $(PRODUCER) $(CONSUMER) $(SERVER) $(CONTROL) ./test/*
 	rm -rf ./doc/doxygen_sqlite3.db ./doc/html/ ./doc/latex/ ./doc/man/ refman.pdf
 
 
