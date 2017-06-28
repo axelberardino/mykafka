@@ -32,7 +32,7 @@ warn "Launching htop in another terminal could be useful!"
 read -p "Press enter to continue this test"
 
 section "We launch 4 consumers on each partition, they will consume as soon as there is data"
-text "They will stop after consuming 100k message."
+text "They will stop after consuming 100k message"
 consumer_pids=""
 
 for part in $(seq 4); do

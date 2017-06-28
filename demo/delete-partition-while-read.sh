@@ -7,7 +7,7 @@ if [ "$cur_dir" = "demo" ]; then
 fi
 source "${prefix}/utils.sh" &>/dev/null
 
-title "SIMPLE PRODUCER-CONSUMER"
+title "DELETE PARTITION WHILE READ"
 echo
 
 section "Clean folder $DATA_DIR"

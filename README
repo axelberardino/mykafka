@@ -168,7 +168,7 @@ Broker
 Le broker possède une liste de partitions auquel il associe des fichiers de configurations.
 
 Une partition est associée à un fichier de configuration binaire. Celui-ci est mmap'é
-et fait exactement 32 octets. Ce fichier de configuration possède: la taille d'un segment,
+et fait exactement 32 octets (4 * int64). Ce fichier de configuration possède: la taille d'un segment,
 la taille maximale d'une partition, le ttl d'un segment, et le dernier offset valide de
 la partition.
 

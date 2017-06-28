@@ -26,7 +26,7 @@ warn "Launching htop in another terminal could be useful!"
 read -p "Press enter to continue this test"
 
 section "We launch 16 consumers, they will consume as soon as there is data on the partition"
-text "They will stop after consuming 100k message."
+text "They will stop after consuming 100k message"
 consumer_pids=""
 for i in $(seq 16); do
     launch_bg "./$CONSUMER --topic=mytopic --partition=0 --nb-offset 100000" "$LOG_DIR/consumer-$i.log"

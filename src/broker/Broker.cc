@@ -75,13 +75,14 @@ namespace Broker
   {
     boost::lock_guard<boost::shared_mutex> lock(mutex_);
 
-    const std::string key = request.topic() + "-" + std::to_string(request.partition());
-    auto found = topics_.find({request.topic(), request.partition()});
+    const Utils::ConfigManager::TopicPartition key{request.topic(), request.partition()};
+    const std::string strkey = request.topic() + "-" + std::to_string(request.partition());
+    auto found = topics_.find(key);
     if (found != topics_.cend())
       return Utils::err(mykafka::Error::TOPIC_ERROR,
-                        "The topic/partition " + key + " already exists!");
+                        "The topic/partition " + strkey + " already exists!");
 
-    auto res = createAndAddNewPartition(base_path_ + "/" + key,
+    auto res = createAndAddNewPartition(base_path_ + "/" + strkey,
                                         request.topic(), request.partition(),
                                         request.max_segment_size(),
                                         request.max_partition_size(),
@@ -89,7 +90,7 @@ namespace Broker
     if (res.code() != mykafka::Error::OK)
       return res;
 
-    return config_manager_.create({request.topic(), request.partition()},
+    return config_manager_.create(key,
                                   request.max_segment_size(),
                                   request.max_partition_size(),
                                   request.segment_ttl());
@@ -100,18 +101,19 @@ namespace Broker
   {
     boost::lock_guard<boost::shared_mutex> lock(mutex_);
 
-    const std::string key = request.topic() + "-" + std::to_string(request.partition());
-    auto found = topics_.find({request.topic(), request.partition()});
+    const Utils::ConfigManager::TopicPartition key{request.topic(), request.partition()};
+    const std::string strkey = request.topic() + "-" + std::to_string(request.partition());
+    auto found = topics_.find(key);
     if (found == topics_.cend())
       return Utils::err(mykafka::Error::TOPIC_ERROR,
-                        "The topic " + key + " don't exists!");
+                        "The topic " + strkey + " don't exists!");
 
     auto res = found->second.partition->deletePartition();
     if (res.code() != mykafka::Error::OK)
       return res;
     topics_.erase(found);
 
-    return Utils::err(mykafka::Error::OK);
+    return config_manager_.remove(key);
   }
 
   mykafka::Error

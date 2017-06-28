@@ -1,8 +1,9 @@
 CXX = g++
-CXXFLAGS += -I/usr/local/include -I./protos/ -I./src/ -pthread -W -Wall -std=c++11
+CXXFLAGS += -I/usr/local/include -I./protos/ -I./src/ -W -Wall -std=c++11
 #CXXFLAGS += -O0 -g -ggdb
 CXXFLAGS += -O3
-LDFLAGS += -L/usr/local/lib `pkg-config --libs grpc++ grpc`       \
+LDFLAGS += -pthread \
+	   -L/usr/local/lib `pkg-config --libs grpc++ grpc` \
            -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed \
            -lprotobuf -lpthread -ldl -lboost_system -lboost_thread \
            -lboost_filesystem -lboost_program_options
@@ -63,16 +64,16 @@ CONTROL = mykafka-ctl
 
 all: $(PRODUCER) $(CONSUMER) $(SERVER) $(CONTROL)
 
-$(PRODUCER): system-check $(PRODUCER_OBJ) $(HEADERS)
+$(PRODUCER): $(PRODUCER_OBJ) $(HEADERS)
 	$(CXX) $(PRODUCER_OBJ) $(LDFLAGS) -o $@
 
-$(CONSUMER): system-check $(CONSUMER_OBJ) $(HEADERS)
+$(CONSUMER): $(CONSUMER_OBJ) $(HEADERS)
 	$(CXX) $(CONSUMER_OBJ) $(LDFLAGS) -o $@
 
-$(SERVER): system-check $(SERVER_OBJ) $(HEADERS)
+$(SERVER): $(SERVER_OBJ) $(HEADERS)
 	$(CXX) $(SERVER_OBJ) $(LDFLAGS) -o $@
 
-$(CONTROL): system-check $(CONTROL_OBJ) $(HEADERS)
+$(CONTROL): $(CONTROL_OBJ) $(HEADERS)
 	$(CXX) $(CONTROL_OBJ) $(LDFLAGS) -o $@
 
 Makefile.deps: $(ALL_SRC)
@@ -144,61 +145,18 @@ clean:
 distclean: clean
 	rm -f $(PRODUCER) $(CONSUMER) $(SERVER) ./test/*
 
-HAS_PROTOC = $(shell $$(which $(PROTOC)) &>/dev/null && echo true || echo false)
-ifeq ($(HAS_PROTOC),true)
-HAS_VALID_PROTOC = $(shell $$($(PROTOC) --version | grep -q libprotoc.3) &>/dev/null && echo true || echo false)
-endif
-HAS_PLUGIN = $(shell $$(which $(GRPC_CPP_PLUGIN)) &>/dev/null && echo true || echo false)
-HAS_TEST_DIR = $(shell $$(stat $(TEST_PATH)) &>/dev/null && echo true || echo false)
-HAS_TEST_OUTPUT_DIR = $(shell $$(stat $(TEST_OUTPUT_PATH)) &>/dev/null && echo true || echo false)
-
-SYSTEM_OK = false
-ifeq ($(HAS_VALID_PROTOC),true)
-ifeq ($(HAS_PLUGIN),true)
-SYSTEM_OK = true
-endif
-endif
+#HAS_PROTOC = $(shell $$(which $(PROTOC)) &>/dev/null && echo true || echo false)
+#ifeq ($(HAS_PROTOC),true)
+#HAS_VALID_PROTOC = $(shell $$($(PROTOC) --version | grep -q libprotoc.3) &>/dev/null && echo true || echo false)
+#endif
+#HAS_PLUGIN = $(shell $$(which $(GRPC_CPP_PLUGIN)) &>/dev/null && echo true || echo false)
 
 check-test:
-ifneq ($(HAS_TEST_DIR),true)
+ifeq (,$(wildcard $(TEST_PATH)))
 	mkdir -p $(TEST_PATH)
 endif
-ifneq ($(HAS_TEST_OUTPUT_DIR),true)
+ifeq (,$(wildcard $(TEST_OUTPUT_PATH)))
 	mkdir -p $(TEST_OUTPUT_PATH)
-endif
-
-system-check:
-ifneq ($(HAS_VALID_PROTOC),true)
-	@echo " DEPENDENCY ERROR"
-	@echo
-	@echo "You don't have protoc 3.0.0 installed in your path."
-	@echo "Please install Google protocol buffers 3.0.0 and its compiler."
-	@echo "You can find it here:"
-	@echo
-	@echo "   https://github.com/google/protobuf/releases/tag/v3.0.0"
-	@echo
-	@echo "Here is what I get when trying to evaluate your version of protoc:"
-	@echo
-	-$(PROTOC) --version
-	@echo
-	@echo
-endif
-ifneq ($(HAS_PLUGIN),true)
-	@echo " DEPENDENCY ERROR"
-	@echo
-	@echo "You don't have the grpc c++ protobuf plugin installed in your path."
-	@echo "Please install grpc. You can find it here:"
-	@echo
-	@echo "   https://github.com/grpc/grpc"
-	@echo
-	@echo "Here is what I get when trying to detect if you have the plugin:"
-	@echo
-	-which $(GRPC_CPP_PLUGIN)
-	@echo
-	@echo
-endif
-ifneq ($(SYSTEM_OK),true)
-	@false
 endif
 
 #Don't create dependencies when we're cleaning, for instance

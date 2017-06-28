@@ -25,15 +25,15 @@ launch "./$CTL --topic=mytopic --partition=0 --action=create"
 section "We launch 8 consumers, they will consume as soon as there is data on the partition"
 consumer_pids=""
 for i in $(seq 8); do
-    launch_bg "./$CONSUMER --topic=mytopic --partition=0" "$LOG_DIR/consumer-$i.log"
+    launch_bg "./$CONSUMER --topic=mytopic --partition=0 --stop-if-no-message" "$LOG_DIR/consumer-$i.log"
     consumer_pids="$consumer_pids $!"
 done
 
 section "Launch the producer, to insert the british dictionnary"
 launch "cat $EN_DICT | ./$PRODUCER --topic=mytopic --partition 0" "$LOG_DIR/producer.log"
 
-section "Just wait a little, to let the consumers get the data"
-launch "sleep 3"
+section "Wait for the consumers to get the data"
+launch "wait $consumer_pids"
 
 section "Stop the server, and the consumers"
 launch "kill $server_pid $consumer_pids &>/dev/null"
