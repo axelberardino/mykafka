@@ -54,6 +54,13 @@ Une démo de différents scénarii peut être lancée via:
 $ make demo
 
 
+DOCUMENTATION
+
+Le code est documenté au format doxygen. Celle-ci peut être générée via:
+
+$ make doc
+
+
 BINAIRES
 
 mykafka-broker: Le serveur de r"ception.
