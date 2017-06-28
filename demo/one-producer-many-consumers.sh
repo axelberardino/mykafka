@@ -17,7 +17,6 @@ launch "mkdir -p $DATA_DIR $LOG_DIR"
 section "Launch server"
 launch_bg "./$SERVER --log-dir=$DATA_DIR" "$LOG_DIR/server.log"
 server_pid=$!
-
 sleep 1
 
 section "Add topic mytopic, partition 0"
@@ -31,12 +30,12 @@ for i in $(seq 8); do
 done
 
 section "Launch the producer, to insert the british dictionnary"
-launch "cat /usr/share/dict/british-english | ./$PRODUCER --topic=mytopic --partition 0" "$LOG_DIR/producer.log"
+launch "cat $EN_DICT | ./$PRODUCER --topic=mytopic --partition 0" "$LOG_DIR/producer.log"
 
 section "Just wait a little, to let the consumers get the data"
 launch "sleep 3"
 
 section "Stop the server, and the consumers"
-launch "kill $server_pid $consumer_pids"
+launch "kill $server_pid $consumer_pids &>/dev/null"
 
 wait

@@ -17,7 +17,6 @@ launch "mkdir -p $DATA_DIR $LOG_DIR"
 section "Launch server"
 launch_bg "./$SERVER --log-dir=$DATA_DIR" "$LOG_DIR/server.log"
 server_pid=$!
-
 sleep 1
 
 section "Add topic test_topic, partition 1"
@@ -27,8 +26,8 @@ section "Check that partition exists"
 launch "./$CTL --action=info"
 
 section "Launch producer, to insert english dictionnary, please wait..."
-launch "cat /usr/share/dict/british-english | ./$PRODUCER --topic test_topic --partition 1" "$LOG_DIR/producer.log"
-text "Inserted $(cat /usr/share/dict/british-english | wc -l) words!"
+launch "cat $EN_DICT | ./$PRODUCER --topic test_topic --partition 1" "$LOG_DIR/producer.log"
+text "Inserted $(cat $EN_DICT | wc -l) words!"
 tail -n 10 $LOG_DIR/producer.log
 
 section "Launch consumer, to get the words, please wait..."
@@ -37,6 +36,6 @@ text "Execution finished"
 tail -n 10 $LOG_DIR/consumer.log
 
 section "Stop the server"
-launch "kill $server_pid"
+launch "kill $server_pid &>/dev/null"
 
 wait

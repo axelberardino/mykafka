@@ -20,7 +20,7 @@ section()
 
 text()
 {
-    echo -e "\033[34m;1${1}\033[0m"
+    echo -e "\033[34;1m${1}\033[0m"
 }
 
 warn()
@@ -80,6 +80,7 @@ CTL=mykafka-ctl
 stat $CTL &>/dev/null || CTL=../$CTL
 stat $CTL &>/dev/null || abort "Can't find myKafka ctl"
 
+EN_DICT="/usr/share/dict/british-english"
 BASE_DIR="${1:-/tmp/mykafka-demo}"
 DATA_DIR="$BASE_DIR/data"
 LOG_DIR="$BASE_DIR/log"

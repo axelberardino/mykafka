@@ -17,7 +17,6 @@ launch "mkdir -p $DATA_DIR $LOG_DIR"
 section "Launch server"
 launch_bg "./$SERVER --log-dir=$DATA_DIR" "$LOG_DIR/server.log"
 server_pid=$!
-
 sleep 1
 
 section "Test add topic library, 3 partitions"
@@ -37,7 +36,7 @@ section "Get current offsets of library/O"
 launch "./$CTL --action=offsets --topic=library --partition 0"
 
 section "Launch producer, to insert some words from english dictionnary, please wait..."
-launch "head -n 10 /usr/share/dict/british-english | ./$PRODUCER --topic library --partition 0" "$LOG_DIR/producer.log"
+launch "head -n 10 $EN_DICT | ./$PRODUCER --topic library --partition 0" "$LOG_DIR/producer.log"
 text "Inserted 10 words!"
 tail -n 10 $LOG_DIR/producer.log
 
@@ -73,6 +72,6 @@ section "Server state after restart:"
 launch "./$CTL --action=info"
 
 section "Stop the server"
-launch "kill $server_pid"
+launch "kill $server_pid &>/dev/null"
 
 wait

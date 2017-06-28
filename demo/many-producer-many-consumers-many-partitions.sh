@@ -17,7 +17,6 @@ launch "mkdir -p $DATA_DIR $LOG_DIR"
 section "Launch server"
 launch_bg "./$SERVER --log-dir=$DATA_DIR" "$LOG_DIR/server.log"
 server_pid=$!
-
 sleep 1
 
 section "Add topic mytopic, partition 0 with "
@@ -48,15 +47,15 @@ producer_pids=""
 
 for part in $(seq 4); do
     for i in $(seq 2); do
-        launch_bg "cat /usr/share/dict/british-english | ./$PRODUCER --topic=mytopic --partition $part" "$LOG_DIR/producer-$i.log"
+        launch_bg "cat $EN_DICT | ./$PRODUCER --topic=mytopic --partition $part" "$LOG_DIR/producer-$i.log"
         producer_pids="$producer_pids $!"
     done
 done
 
-section "Wait for consumer and producer"
+section "Wait for consumers and producers"
 launch "wait $consumer_pids $producer_pids"
 
-section "Stop the server, and the consumers"
-launch "kill $server_pid $consumer_pids &>/dev/null"
+section "Stop the server, the producers and the consumers"
+launch "kill $server_pid $producer_pids $consumer_pids &>/dev/null"
 
 wait
