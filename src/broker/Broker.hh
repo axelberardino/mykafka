@@ -17,6 +17,7 @@ namespace Broker
   ** This class hold a list of partition
   ** with their information.
   **
+  ** @verbatim
   ** Topic:bookstore
   **         partition 0:
   **             max_segment_size: 4096
@@ -34,6 +35,7 @@ namespace Broker
   **             commit_offset: 456438
   ** Topic:events
   **         etc...
+  ** @endverbatim
   */
   class Broker
   {

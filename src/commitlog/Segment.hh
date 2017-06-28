@@ -15,12 +15,14 @@ namespace CommitLog
   ** @see Index for index internal structure.
   **
   ** Log file has this structure:
+  ** @verbatim
   **
   ** 8 byte offset
   ** 4 byte size of payload
   ** N byte for payload
   **
   ** So a message size is: 12 (header length) + N
+  ** @verbatim
   */
   class Segment
   {
