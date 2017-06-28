@@ -144,7 +144,7 @@ clean:
 
 distclean: clean
 	rm -f $(PRODUCER) $(CONSUMER) $(SERVER) $(CONTROL) ./test/*
-	rm -rf ./doc/doxygen_sqlite3.db ./doc/html/ ./doc/latex/ ./doc/man/ refman.pdf
+	rm -rf ./doc/doxygen_sqlite3.db ./doc/html/ ./doc/latex/ ./doc/man/ ./doc/refman.pdf
 
 
 #HAS_PROTOC = $(shell $$(which $(PROTOC)) &>/dev/null && echo true || echo false)
