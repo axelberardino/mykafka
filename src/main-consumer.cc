@@ -27,7 +27,7 @@ int main(int argc, char** argv)
      po::value<std::string>(&address)->default_value("localhost:9000"), "Set the broker address")
     ("topic", po::value<std::string>(&topic)->default_value("default"), "Set the topic")
     ("offset", po::value<int64_t>(&offset)->default_value(-1), "Set the starting offset (-1 deduce start)")
-    ("nb_offset", po::value<int64_t>(&nb_offset)->default_value(0),
+    ("nb-offset", po::value<int64_t>(&nb_offset)->default_value(0),
      "Set the max number of offset to read (0 = no limit)")
     ("partition", po::value<int32_t>(&partition)->default_value(0), "Set the partition")
     ("stop-if-no-message", po::value<bool>(&stop_no_msg)->default_value(false), "Stop if no message left")

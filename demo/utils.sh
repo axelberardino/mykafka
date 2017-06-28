@@ -15,12 +15,12 @@ title()
 
 section()
 {
-    echo -e "\n\033[34m--> ${1}\033[0m"
+    echo -e "\n\033[34;1m--> ${1}\033[0m"
 }
 
 text()
 {
-    echo -e "\033[34m${1}\033[0m"
+    echo -e "\033[34m;1${1}\033[0m"
 }
 
 warn()
@@ -37,7 +37,9 @@ abort()
 launch()
 {
     echo -ne "\033[33m"
+    set -f
     echo -n $1
+    set +f
     echo -e "\033[0m"
     if [ $# -eq 1 ]; then
         eval $1
@@ -50,7 +52,9 @@ launch()
 launch_bg()
 {
     echo -ne "\033[33m"
+    set -f
     echo -n $1
+    set +f
     echo -e "\033[0m"
     if [ $# -eq 1 ]; then
         eval $1 &

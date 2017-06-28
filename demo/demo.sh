@@ -1,8 +1,11 @@
 #!/bin/bash
 
 BASE_DIR=/tmp/mykafka-demo
-DEMOS="simple-producer-consumer.sh ctl-orders.sh one-producer-many-consumers.sh"
-#DEMOS="one-producer-many-consumers.sh"
+DEMOS="simple-producer-consumer.sh ctl-orders.sh \
+ one-producer-many-consumers.sh partition-size.sh \
+ segment-ttl.sh many-producer-many-consumers-one-partition.sh \
+ many-producer-many-consumers-many-partitions.sh"
+DEMOS="many-producer-many-consumers-many-partitions.sh"
 
 trap "echo" SIGTERM
 
@@ -36,12 +39,3 @@ done
 # Bien "tuner" le segment size !
 # Test gros bench 1, 1 partition, 8 writer, 16 lecteurs infinis.
 # Test gros bench 2, 8 partitions, * (1 writer, 2 lecteurs infinis).
-
-# 1 writer: max partition size 40 Mo, segsize 4 Mo
-# 1 writer: ttl 1 sec, segsize 1024 * 1024 (1 Mo). Constater qu'il ne reste qu'un seul log
-
-
-# Idees a mettre dans TODO
-#  * Au lieu de recherche binaire, tenter un accès direct
-#    dans index (car offset contigue + base_offset connu)
-

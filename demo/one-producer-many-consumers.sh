@@ -25,7 +25,6 @@ launch "./$CTL --topic=mytopic --partition=0 --action=create"
 
 section "We launch 8 consumers, they will consume as soon as there is data on the partition"
 consumer_pids=""
-
 for i in $(seq 8); do
     launch_bg "./$CONSUMER --topic=mytopic --partition=0" "$LOG_DIR/consumer-$i.log"
     consumer_pids="$consumer_pids $!"

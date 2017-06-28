@@ -51,7 +51,7 @@ namespace CommitLog
     ** @param max_partition_size The max size of this
     **          partition (0 = no size restriction).
     ** @param segment_ttl Time after a segment has to
-    **          be destroyed (0 = disabled).
+    **          be destroyed in seconds (0 = disabled).
     */
     Partition(const std::string& path, int64_t max_segment_size,
               int64_t max_partition_size, int64_t segment_ttl);

@@ -30,6 +30,8 @@ Des tests unitaires peuvent être joués via:
 
 $ make test
 
+Certains tests peuvent échouer si le nombre autorisé de fichier ouvert est trop faible !
+sudo ulimit -n 65535
 
 BENCH
 
@@ -40,7 +42,7 @@ $ make bench
 
 DEMO
 
-Une démo de différents scénarii peuvent être lancés via:
+Une démo de différents scénarii peut être lancée via:
 
 $ make demo
 
