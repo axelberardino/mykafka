@@ -9,6 +9,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/mman.h>
+#include <cstdio>
+#include <cstring>
 
 namespace Utils
 {
@@ -78,15 +80,18 @@ namespace Utils
     CfgInfo info;
     info.fd_ = ::open(path.c_str(), O_RDWR | O_CREAT, 0666);
     if (info.fd_ < 0)
-      return Utils::err(mykafka::Error::FILE_ERROR, "Can't open config file " + path + "!");
+      return Utils::err(mykafka::Error::FILE_ERROR, "Can't open config file " +
+                        path + " because: " + std::string(::strerror(errno)));
 
     struct stat buf;
     if (::fstat(info.fd_, &buf) < 0)
     {
       if (::close(info.fd_) < 0)
         return Utils::err(mykafka::Error::FILE_ERROR,
-                          "Can't close during failed stat config file " + path + "!");
-      return Utils::err(mykafka::Error::FILE_ERROR, "Can't stat config file " + path + "!");
+                          "Can't close during failed stat config file " +
+                          path + " because: " + std::string(::strerror(errno)));
+      return Utils::err(mykafka::Error::FILE_ERROR, "Can't stat config file " +
+                        path + " because: " + std::string(::strerror(errno)));
     }
 
     const int64_t size = sizeof (RawInfo);
@@ -94,31 +99,38 @@ namespace Utils
     {
       if (::close(info.fd_) < 0)
         return Utils::err(mykafka::Error::FILE_ERROR,
-                          "Can't close during failed resize config file " + path + "!");
-      return Utils::err(mykafka::Error::FILE_ERROR, "Can't resize config file " + path + "!");
+                          "Can't close during failed resize config file " +
+                          path + " because: " + std::string(::strerror(errno)));
+      return Utils::err(mykafka::Error::FILE_ERROR, "Can't resize config file " +
+                        path + " because: " + std::string(::strerror(errno)));
     }
     if (::lseek(info.fd_, size - 1, SEEK_SET) < 0)
     {
       if (::close(info.fd_) < 0)
         return Utils::err(mykafka::Error::FILE_ERROR,
-                          "Can't close during failed seek config file " + path + "!");
-      return Utils::err(mykafka::Error::FILE_ERROR, "Can't seek config file " + path + "!");
+                          "Can't close during failed seek config file " +
+                          path + " because: " + std::string(::strerror(errno)));
+      return Utils::err(mykafka::Error::FILE_ERROR, "Can't seek config file " +
+                        path + " because: " + std::string(::strerror(errno)));
     }
     if (::write(info.fd_, "", 1) < 0)
     {
       if (::close(info.fd_) < 0)
         return Utils::err(mykafka::Error::FILE_ERROR,
-                          "Can't close during failed write 0 at the config file end " + path + "!");
-      return Utils::err(mykafka::Error::FILE_ERROR, "Can't write at config file end " + path + "!");
+                          "Can't close during failed write 0 at the config file end " +
+                          path + " because: " + std::string(::strerror(errno)));
+      return Utils::err(mykafka::Error::FILE_ERROR, "Can't write at config file end " +
+                        path + " because: " + std::string(::strerror(errno)));
     }
 
     info.addr_ = ::mmap(0, size, PROT_READ | PROT_WRITE, MAP_SHARED, info.fd_, 0);
     if (info.addr_ == MAP_FAILED)
     {
       if (::close(info.fd_) < 0)
-        return Utils::err(mykafka::Error::FILE_ERROR,
-                          "Can't close during failed mmap " + path + "!");
-      return Utils::err(mykafka::Error::FILE_ERROR, "Error mapping the file " + path + "!");
+        return Utils::err(mykafka::Error::FILE_ERROR, "Can't close during failed mmap " +
+                          path + " because: " + std::string(::strerror(errno)));;
+      return Utils::err(mykafka::Error::FILE_ERROR, "Error mapping the file " +
+                        path + " because: " + std::string(::strerror(errno)));
     }
 
     info.info = {seg_size, part_size, ttl, -1};
@@ -140,7 +152,8 @@ namespace Utils
     CfgInfo info;
     info.fd_ = ::open(path.c_str(), O_RDWR | O_CREAT, 0666);
     if (info.fd_ < 0)
-      return Utils::err(mykafka::Error::FILE_ERROR, "Can't open config file " + path + "!");
+      return Utils::err(mykafka::Error::FILE_ERROR, "Can't open config file " +
+                        path + " because: " + std::string(::strerror(errno)));
 
     const int64_t size = sizeof (RawInfo);
     info.addr_ = ::mmap(0, size, PROT_READ | PROT_WRITE, MAP_SHARED, info.fd_, 0);
@@ -148,8 +161,10 @@ namespace Utils
     {
       if (::close(info.fd_) < 0)
         return Utils::err(mykafka::Error::FILE_ERROR,
-                          "Can't close during failed mmap " + path + "!");
-      return Utils::err(mykafka::Error::FILE_ERROR, "Error mapping the file " + path + "!");
+                          "Can't close during failed mmap " +
+                          path + " because: " + std::string(::strerror(errno)));
+      return Utils::err(mykafka::Error::FILE_ERROR, "Error mapping the file " +
+                        path + " because: " + std::string(::strerror(errno)));
     }
 
     info.info = *reinterpret_cast<RawInfo*>(info.addr_);
@@ -239,10 +254,11 @@ namespace Utils
   ConfigManager::close(const CfgInfo& info, const std::string& filename)
   {
     if (::munmap(info.addr_, sizeof (RawInfo)) < 0)
-      return Utils::err(mykafka::Error::FILE_ERROR, "Can't unmap config " + filename + "!");
+      return Utils::err(mykafka::Error::FILE_ERROR, "Can't unmap config " +
+                        filename + " because: " + std::string(::strerror(errno)));
     if (::close(info.fd_))
-      return Utils::err(mykafka::Error::FILE_ERROR,
-                        "Can't close " + filename + "!");
+      return Utils::err(mykafka::Error::FILE_ERROR, "Can't close " +
+                        filename + " because: " + std::string(::strerror(errno)));
 
     return Utils::err(mykafka::Error::OK);
   }

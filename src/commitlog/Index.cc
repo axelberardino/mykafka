@@ -6,6 +6,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/mman.h>
+#include <cstdio>
+#include <cstring>
 
 namespace CommitLog
 {
@@ -29,15 +31,18 @@ namespace CommitLog
 
     fd_ = ::open(filename_.c_str(), O_RDWR | O_CREAT, 0666);
     if (fd_ < 0)
-      return Utils::err(mykafka::Error::FILE_ERROR, "Can't open index " + filename_ + "!");
+      return Utils::err(mykafka::Error::FILE_ERROR, "Can't open index " +
+                        filename_ + " because: " + std::string(::strerror(errno)));
 
     struct stat buf;
     if (::fstat(fd_, &buf) < 0)
     {
       if (::close(fd_) < 0)
         return Utils::err(mykafka::Error::FILE_ERROR,
-                          "Can't close during failed stat index " + filename_ + "!");
-      return Utils::err(mykafka::Error::FILE_ERROR, "Can't stat index " + filename_ + "!");
+                          "Can't close during failed stat index " +
+                          filename_ + " because: " + std::string(::strerror(errno)));
+      return Utils::err(mykafka::Error::FILE_ERROR, "Can't stat index " +
+                        filename_ + " because: " + std::string(::strerror(errno)));
     }
 
     position_ = buf.st_size;
@@ -46,22 +51,28 @@ namespace CommitLog
     {
       if (::close(fd_) < 0)
         return Utils::err(mykafka::Error::FILE_ERROR,
-                          "Can't close during failed resize index " + filename_ + "!");
-      return Utils::err(mykafka::Error::FILE_ERROR, "Can't resize index " + filename_ + "!");
+                          "Can't close during failed resize index " +
+                          filename_ + " because: " + std::string(::strerror(errno)));
+      return Utils::err(mykafka::Error::FILE_ERROR, "Can't resize index " +
+                        filename_ + " because: " + std::string(::strerror(errno)));
     }
     if (::lseek(fd_, rounded_size - 1, SEEK_SET) < 0)
     {
       if (::close(fd_) < 0)
         return Utils::err(mykafka::Error::FILE_ERROR,
-                          "Can't close during failed seek index " + filename_ + "!");
-      return Utils::err(mykafka::Error::FILE_ERROR, "Can't seek index " + filename_ + "!");
+                          "Can't close during failed seek index " +
+                          filename_ + " because: " + std::string(::strerror(errno)));
+      return Utils::err(mykafka::Error::FILE_ERROR, "Can't seek index " +
+                        filename_ + " because: " + std::string(::strerror(errno)));
     }
     if (::write(fd_, "", 1) < 0)
     {
       if (::close(fd_) < 0)
         return Utils::err(mykafka::Error::FILE_ERROR,
-                          "Can't close during failed write 0 at the index end " + filename_ + "!");
-      return Utils::err(mykafka::Error::FILE_ERROR, "Can't write at index end " + filename_ + "!");
+                          "Can't close during failed write 0 at the index end " +
+                          filename_ + " because: " + std::string(::strerror(errno)));
+      return Utils::err(mykafka::Error::FILE_ERROR, "Can't write at index end " +
+                        filename_ + " because: " + std::string(::strerror(errno)));
     }
 
     addr_ = ::mmap(0, size_, PROT_READ | PROT_WRITE, MAP_SHARED, fd_, 0 /*position ?*/);
@@ -69,8 +80,10 @@ namespace CommitLog
     {
       if (::close(fd_) < 0)
         return Utils::err(mykafka::Error::FILE_ERROR,
-                          "Can't close during failed mmap " + filename_ + "!");
-      return Utils::err(mykafka::Error::FILE_ERROR, "Error mapping the file " + filename_ + "!");
+                          "Can't close during failed mmap " +
+                          filename_ + " because: " + std::string(::strerror(errno)));
+      return Utils::err(mykafka::Error::FILE_ERROR, "Error mapping the file " +
+                        filename_ + " because: " + std::string(::strerror(errno)));
     }
 
     return err;
@@ -113,9 +126,11 @@ namespace CommitLog
   Index::sync()
   {
     if (msync(addr_, position_, MS_SYNC) < 0)
-      return Utils::err(mykafka::Error::FILE_ERROR, "Can't msync " + filename_ + "!");
+      return Utils::err(mykafka::Error::FILE_ERROR, "Can't msync " +
+                        filename_ + " because: " + std::string(::strerror(errno)));
     if (syncfs(fd_) < 0)
-      return Utils::err(mykafka::Error::FILE_ERROR, "Can't file sync " + filename_ + "!");
+      return Utils::err(mykafka::Error::FILE_ERROR, "Can't file sync " +
+                        filename_ + " because: " + std::string(::strerror(errno)));
 
     return Utils::err(mykafka::Error::OK);
   }
@@ -129,14 +144,16 @@ namespace CommitLog
 
     //    sync(); // FIXME : Cost a lost but could be mandatory.
     if (munmap(addr_, size_) < 0)
-      return Utils::err(mykafka::Error::FILE_ERROR, "Can't unmap index " + filename_ + "!");
+      return Utils::err(mykafka::Error::FILE_ERROR, "Can't unmap index " +
+                        filename_ + " because: " + std::string(::strerror(errno)));
 
     if (ftruncate(fd_, position_) < 0)
-      return Utils::err(mykafka::Error::FILE_ERROR, "Can't resize index " + filename_ + "!");
+      return Utils::err(mykafka::Error::FILE_ERROR, "Can't resize index " +
+                        filename_ + " because: " + std::string(::strerror(errno)));
 
     if (::close(fd_))
-      return Utils::err(mykafka::Error::FILE_ERROR,
-                        "Can't close " + filename_ + "!");
+      return Utils::err(mykafka::Error::FILE_ERROR, "Can't close " +
+                        filename_ + " because: " + std::string(::strerror(errno)));
 
     fd_ = -1;
     return Utils::err(mykafka::Error::OK);
@@ -198,8 +215,8 @@ namespace CommitLog
   Index::deleteIndex()
   {
     if (::unlink(filename_.c_str()) < 0)
-      return Utils::err(mykafka::Error::FILE_ERROR,
-                        "Can't delete index file " + filename_ + "!");
+      return Utils::err(mykafka::Error::FILE_ERROR, "Can't delete index file " +
+                        filename_ + " because: " + std::string(::strerror(errno)));
 
     return Utils::err(mykafka::Error::OK);
   }

@@ -7,6 +7,8 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <cassert>
+#include <cstdio>
+#include <cstring>
 
 namespace CommitLog
 {
@@ -58,12 +60,14 @@ namespace CommitLog
     fd_ = ::open(filename_.c_str(), O_RDWR | O_CREAT | O_APPEND, 0666);
     if (fd_ < 0)
       return Utils::err(mykafka::Error::FILE_ERROR, "Can't"
-                        " open log " + filename_ + "!");
+                        " open log " + filename_ + " because: " +
+                        std::string(::strerror(errno)));
 
     struct stat buf;
     if (::fstat(fd_, &buf) < 0)
       return Utils::err(mykafka::Error::FILE_ERROR, "Can't"
-                        " stat log " + filename_ + "!");
+                        " stat log " + filename_ + " because: " +
+                        std::string(::strerror(errno)));
     physical_size_ = buf.st_size;
     mtime_ = buf.st_mtime;
 
@@ -73,9 +77,11 @@ namespace CommitLog
       if (::close(fd_) < 0)
         return Utils::err(mykafka::Error::FILE_ERROR,
                           "Can't close file after a failed"
-                          " read-only open log " + filename_ + "!");
+                          " read-only open log " + filename_ + " because: " +
+                          std::string(::strerror(errno)));
       return Utils::err(mykafka::Error::FILE_ERROR, "Can't"
-                        " open read-only log " + filename_ + "!");
+                        " open read-only log " + filename_ + " because: " +
+                        std::string(::strerror(errno)));
     }
 
     res = reconstructIndexAndGetLastOffset();
@@ -84,11 +90,13 @@ namespace CommitLog
       if (::close(fd_) < 0)
         return Utils::err(mykafka::Error::FILE_ERROR,
                           "Can't close file after a failed"
-                          " index reconstruct " + filename_ + "!");
+                          " index reconstruct " + filename_ + " because: " +
+                          std::string(::strerror(errno)));
       if (::close(fd_read_) < 0)
         return Utils::err(mykafka::Error::FILE_ERROR,
                           "Can't close read-only file after a failed"
-                          " index reconstruct " + filename_ + "!");
+                          " index reconstruct " + filename_ + " because: " +
+                          std::string(::strerror(errno)));
       return res;
     }
 
@@ -100,14 +108,16 @@ namespace CommitLog
   {
     if (::lseek(fd_, 0, SEEK_SET) < 0)
       return Utils::err(mykafka::Error::LOG_ERROR, "Can't seek"
-                        " at start of log " + filename_ + "!");
+                        " at start of log " + filename_ + " because: " +
+                          std::string(::strerror(errno)));
 
     while (true)
     {
       auto bytes = ::read(fd_, &next_offset_, OFFSET_SIZE);
       if (bytes < 0)
         return Utils::err(mykafka::Error::LOG_ERROR, "Can't read offset"
-                          " from log " + filename_ + "!");
+                          " from log " + filename_  + " because: " +
+                          std::string(::strerror(errno)));
       // End of file
       if (bytes == 0)
         break;
@@ -116,7 +126,8 @@ namespace CommitLog
       bytes = ::read(fd_, &size, SIZE_SIZE);
       if (bytes <= 0)
         return Utils::err(mykafka::Error::LOG_ERROR, "Can't read size"
-                          " from log " + filename_ + "!");
+                          " from log " + filename_  + " because: " +
+                          std::string(::strerror(errno)));
 
       auto res = index_.write(next_offset_, position_);
       if (res.code() != mykafka::Error::OK)
@@ -138,10 +149,12 @@ namespace CommitLog
     const Entry entry{next_offset_, payload_size};
     if (::write(fd_, &entry, HEADER_SIZE) != HEADER_SIZE)
       return Utils::err(mykafka::Error::LOG_ERROR, "Can't write payload"
-                        " offset/size to log " + filename_ + "!");
+                        " offset/size to log " + filename_ + " because: " +
+                        std::string(::strerror(errno)));
     if (::write(fd_, payload, payload_size) != payload_size)
       return Utils::err(mykafka::Error::LOG_ERROR, "Can't write payload"
-                        " to log " + filename_ + "!");
+                        " to log " + filename_  + " because: " +
+                          std::string(::strerror(errno)));
 
     auto res  = index_.write(next_offset_, position_);
     if (res.code() != mykafka::Error::OK)
@@ -172,24 +185,28 @@ namespace CommitLog
     if (rel_offset == -1 || rel_position == -1)
       return Utils::err(mykafka::Error::LOG_ERROR, "Can't find offset " +
                         std::to_string(relative_offset) +
-                        " when reading log " + filename_ + "!");
+                        " when reading log " + filename_);
 
     if (::lseek(fd_read_, rel_position, SEEK_SET) < 0)
       return Utils::err(mykafka::Error::LOG_ERROR, "Can't seek at " +
                         std::to_string(rel_position) +
-                        " in payload when reading " + filename_ + "!");
+                        " in payload when reading " + filename_ + " because: " +
+                          std::string(::strerror(errno)));
 
     Entry entry{-1, -1};
     if (::read(fd_read_, &entry, HEADER_SIZE) < 0 || entry.offset < 0 || entry.size < 0)
       return Utils::err(mykafka::Error::LOG_ERROR, "Can't read offset/size "
-                        "from log " + filename_ + "!");
+                        "from log " + filename_ + " because: " +
+                          std::string(::strerror(errno)));
 
     payload.resize(entry.size);
     auto bytes = ::read(fd_read_, &payload[0], entry.size);
     if (bytes != entry.size)
       return Utils::err(mykafka::Error::LOG_ERROR, "Can't read payload "
                         "from log " + filename_ + "! (" +
-                        std::to_string(bytes) + " != " + std::to_string(entry.size) + ")");
+                        std::to_string(bytes) + " != " +
+                        std::to_string(entry.size) + ")" + " error is: " +
+                        std::string(::strerror(errno)));
 
     return Utils::err(mykafka::Error::OK);
   }
@@ -209,10 +226,12 @@ namespace CommitLog
 
     if (::close(fd_) < 0)
       return Utils::err(mykafka::Error::FILE_ERROR,
-                        "Can't close log file " + filename_ + "!");
+                        "Can't close log file " + filename_ + " because: " +
+                          std::string(::strerror(errno)));
     if (::close(fd_read_) < 0)
       return Utils::err(mykafka::Error::FILE_ERROR,
-                        "Can't close read-only log file " + filename_ + "!");
+                        "Can't close read-only log file " + filename_ +
+                        " because: " + std::string(::strerror(errno)));
 
     fd_ = -1;
     fd_read_ = -1;
@@ -228,7 +247,8 @@ namespace CommitLog
     close();
     if (::unlink(filename_.c_str()) < 0)
       return Utils::err(mykafka::Error::FILE_ERROR,
-                        "Can't delete log file " + filename_ + "!");
+                        "Can't delete log file " + filename_ +
+                        " because: " + std::string(::strerror(errno)));
 
     return index_.deleteIndex();
   }
@@ -315,18 +335,21 @@ namespace CommitLog
       if (::lseek(fd_read_, rel_position, SEEK_SET) < 0)
         return Utils::err(mykafka::Error::LOG_ERROR, "Can't seek at " +
                           std::to_string(rel_position) +
-                          " in payload when reading " + filename_ + "!");
+                          " in payload when reading " + filename_ + " because: " +
+                          std::string(::strerror(errno)));
       Entry entry{-1, -1};
       if (::read(fd_read_, &entry, HEADER_SIZE) < 0 || entry.offset < 0 || entry.size < 0)
         return Utils::err(mykafka::Error::LOG_ERROR, "Can't read offset/size "
-                          "from log " + filename_ + "!");
+                          "from log " + filename_ + " because: " +
+                          std::string(::strerror(errno)));;
       std::vector<char> payload;
       payload.resize(entry.size);
       auto bytes = ::read(fd_read_, &payload[0], entry.size);
       if (bytes != entry.size)
         return Utils::err(mykafka::Error::LOG_ERROR, "Can't read payload "
                           "from log " + filename_ + "! (" +
-                          std::to_string(bytes) + " != " + std::to_string(entry.size) + ")");
+                          std::to_string(bytes) + " != " + std::to_string(entry.size) +
+                          ")" + " because: " + std::string(::strerror(errno)));
       out << "=> | off: " << entry.offset << " | size: "
           << entry.size << " | payload: ";
       for (char c : payload)
