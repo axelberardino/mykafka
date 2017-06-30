@@ -15,3 +15,6 @@ doc/man/
 doc/refman.pdf
 CMakeCache.txt
 CMakeFiles/
+*.cmake
+Makefile
+Testing
