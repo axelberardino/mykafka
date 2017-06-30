@@ -13,3 +13,5 @@ doc/html/
 doc/latex/
 doc/man/
 doc/refman.pdf
+CMakeCache.txt
+CMakeFiles/
