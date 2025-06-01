@@ -1,8 +1,7 @@
 TODO
 
-* Au lieu de recherche binaire, tenter un accès direct
-  dans index (car offset contigue + base_offset connu)
-  au niveau de l'index.
+* Instead of a binary search, try a direct access through index (because the
+  offset "contiguous + base_offser" is known) at the index level.
 
-* Comparer perfs avec:
+* Compare perfs with:
   https://softwaremill.com/mqperf/#kafka
